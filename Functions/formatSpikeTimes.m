@@ -30,16 +30,16 @@ function [spikeMatrix,spikeTimes,Params,Info] = formatSpikeTimes(File, Params, I
 fileName = strcat(char(File),'_spikes.mat');
 fileFullPath = fullfile(spikeDataFolder, fileName);
 
-% try
 load(fileFullPath, 'spikeTimes', 'spikeDetectionResult', 'channels')
 % remove empty channels
 spikeTimes = spikeTimes(~cellfun(@isempty, spikeTimes));
-% catch
 %     load(strcat(char(File),'.mat'),'spikeTimes','spikeDetectionResult','channels')
 %     % remove empty channels
 %     spikeTimes = spikeTimes(~cellfun(@isempty, spikeTimes));
-% end
 
+if ~exist("channels")
+    channels = load('channels.mat','channels').channels;
+end
 Info.channels = channels;
 
 % 2022-10-07 : Temp hack to remove electrode 82 if 59 electrodes were used

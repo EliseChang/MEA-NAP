@@ -28,7 +28,10 @@ else
     F1 = figure;
 end 
 
-HalfViolinPlot(Ephys.FR,1,[0.5 0.5 0.5], Params.kdeHeight, Params.kdeWidthForOnePoint)
+min_ephys_fr = 0.02; % Ephys.FRThr
+HalfViolinPlot(Ephys.FR,1,[0.5 0.5 0.5], Params.kdeHeight, Params.kdeWidthForOnePoint, min_ephys_fr, 'red')
+hold on
+yline(min_ephys_fr, 'r--', 'LineWidth', 0.5)
 xlim([0.5 1.5])
 xticks([])
 xlabel(strcat('age',num2str(cell2mat(Info.DIV))))

@@ -11,7 +11,7 @@ function batchDetectSpikes(dataPath, savePath, option, files, params)
 %     path to the folder where spike detection
 %             output will be saved
 % option : 
-%     pass either path to files ('path') or list of files ('list');
+%      either path to files ('path') or list of files ('list');
 % files : cell array 
 % 
 % params: structure
@@ -204,10 +204,23 @@ for recording = 1:numel(files)
     file = load(fileName);
     disp(['File loaded']);
     
-    data = file.dat;
-    channels = file.channels;
-    num_channels = length(channels);  
-    fs = file.fs;
+    % TEMP override
+    data = file.stimDat.preSALPA0_100ms;
+
+    try
+        channels = file.channels;
+    catch 'MATLAB:nonExistentField'
+        load("channels.mat")
+    end
+    
+    num_channels = length(channels);
+
+    try
+        fs = file.fs;
+    catch 'MATLAB:nonExistentField'
+        fs = params.fs;
+    end
+    
     ttx = contains(fileName, 'TTX');
     params.duration = length(data)/fs;
     
@@ -278,7 +291,9 @@ for recording = 1:numel(files)
                             customAbsThr = nan;
                         end 
                         
-                        
+                        % TEMP: remove after this run, have implemented
+                        % upstream
+                        trace(isnan(trace)) = 0;
                         [spikeFrames, spikeWaves, ~, threshold] = ...
                             detectSpikesCWT(trace,fs,wid,actual_wname,L,nScales, ...
                             multiplier,nSpikes,ttx, minPeakThrMultiplier, ...

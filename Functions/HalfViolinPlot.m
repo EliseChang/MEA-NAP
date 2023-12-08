@@ -1,4 +1,4 @@
-function HalfViolinPlot(data, pos, colour, width, kdeWidthForOnePoint)
+function HalfViolinPlot(data, pos, colour, width, kdeWidthForOnePoint, thr, colour2)
 % Parameters
 % -----------
 % data : 
@@ -9,6 +9,16 @@ function HalfViolinPlot(data, pos, colour, width, kdeWidthForOnePoint)
 % kdeWidthForOnePoint : 
 
 % created May 2020, author RCFeord
+
+arguments
+    data
+    pos
+    colour
+    width
+    kdeWidthForOnePoint
+    thr = 0
+    colour2 = 'red'
+end
 
 data(isnan(data)) = [];
 data(isinf(data)) = [];
@@ -54,10 +64,20 @@ obj.ViolinPlot.EdgeColor = colour;
 obj.ViolinPlot.LineWidth = 1;
             
 % plot the data points next to the violin
-jitter = (rand(size(data))) * width;
-drops_pos = jitter +pos - (width+0.1);
-obj.ScatterPlot = scatter(drops_pos,data,20,colour,'filled');
-
+if thr
+    data1 = data(data > thr);
+    jitter1 = (rand(size(data1))) * width;
+    drops_pos1 = jitter1 +pos - (width+0.1);
+    data2 = data(data <= thr);
+    jitter2 = (rand(size(data2))) * width;
+    drops_pos2 = jitter2 +pos - (width+0.1);
+    obj.ScatterPlot = scatter(drops_pos1,data1,20,colour,'filled');
+    obj.ScatterPlot = scatter(drops_pos2,data2,20,colour2,'filled');
+else
+    jitter = (rand(size(data))) * width;
+    drops_pos = jitter +pos - (width+0.1);
+    obj.ScatterPlot = scatter(drops_pos,data,20,colour,'filled');
+end
 % plot the data mean
 meanValue = mean(data);
 obj.MeanPlot = scatter(pos, meanValue, 100, [0 0 0], 'filled');

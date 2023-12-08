@@ -1,4 +1,4 @@
-function MEA_batchConvert(ext)
+function MEAbatchConvert(ext,outputDir)
 %form: MEA_batchConvert
 %
 %This function converts MEA bin (binary, RAW) files into mat files in a batch. It will
@@ -22,7 +22,7 @@ function MEA_batchConvert(ext)
 
 %% Select conversion mode 
 
-convertOption = 'electrode'; % save electrode by electrode in a MEA-specific folder
+convertOption = 'whole'; % save electrode by electrode in a MEA-specific folder
 % convertOption = 'whole'; % save the entire grid as one variable
 
 %% initialize
@@ -59,7 +59,7 @@ for i=1:length(files)
         end;
     end;
     if skip==0
-        MEA_load_bin(files(i).name, convertOption);
+        MEA_load_bin(files(i).name, 0, convertOption, outputDir); % don't plot
     end;
 end;
 

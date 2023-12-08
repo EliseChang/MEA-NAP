@@ -1,4 +1,4 @@
-function electrodeHeatMaps(FN, spikeMatrix, channels, spikeFreqMax, Params, coords, figFolder, oneFigureHandle)
+function electrodeHeatMaps(FN, spikeMatrix, channels, spikeFreqMax, spikeFreqMin, Params, coords, figFolder, oneFigureHandle)
 % Plots the firing rate of each node / electrode with a circle representing 
 % the spatial location of the electrode / node, and the color representing 
 % the firing rate (spikes/s)
@@ -91,17 +91,21 @@ end
 for i = 1:length(spikeCount)
 
     pos = [xc(i)-(0.5*nodeScaleF) yc(i)-(0.5*nodeScaleF) nodeScaleF nodeScaleF];
-        try
-            colorToUse = mycolours(ceil(length(mycolours) * ((spikeCount(i) - minSpikeCountToPlot)/(prctile(spikeCount,99,'all')-minSpikeCountToPlot))),1:3);
-            rectangle('Position',pos,'Curvature',[1 1],'FaceColor',colorToUse,'EdgeColor','w','LineWidth',0.1) 
-        catch
-            if (spikeCount(i) - minSpikeCountToPlot) / (prctile(spikeCount,95,'all') - minSpikeCountToPlot) == 0
+            
+            if spikeCount(i) < spikeFreqMin % (spikeCount(i) - minSpikeCountToPlot) / (prctile(spikeCount,95,'all') - minSpikeCountToPlot) <= 0
                 rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
-                    mycolours(ceil(length(mycolours)*((spikeCount(i)- minSpikeCountToPlot)/(prctile(spikeCount,99,'all')-minSpikeCountToPlot))+0.00001),1:3),'EdgeColor','w','LineWidth',0.1)
+                    'w','EdgeColor','w','LineWidth',0.1)
+%                 rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
+%                     mycolours(ceil(length(mycolours)*((spikeCount(i)- minSpikeCountToPlot)/(prctile(spikeCount,99,'all')-minSpikeCountToPlot))+0.00001),1:3),'EdgeColor','w','LineWidth',0.1)
             else
-                rectangle('Position',pos,'Curvature',[1 1],'FaceColor',mycolours(length(mycolours),1:3),'EdgeColor','w','LineWidth',0.1) 
+                try
+                    colorToUse = mycolours(ceil(length(mycolours) * ((spikeCount(i) - minSpikeCountToPlot)/(prctile(spikeCount,99,'all')-minSpikeCountToPlot))),1:3);
+                    rectangle('Position',pos,'Curvature',[1 1],'FaceColor',colorToUse,'EdgeColor','w','LineWidth',0.1)
+                catch
+                    rectangle('Position',pos,'Curvature',[1 1],'FaceColor',mycolours(length(mycolours),1:3),'EdgeColor','w','LineWidth',0.1)
+                end
             end
-        end
+        
     if Params.includeChannelNumberInPlots 
         text(pos(1) + 0.5 * nodeScaleF, pos(2) + 0.5 * nodeScaleF, ...
             sprintf('%.f', channels(i)), 'HorizontalAlignment','center')
@@ -136,17 +140,19 @@ title({strcat(regexprep(FN,'_','','emptymatch'),' Electrode heatmap scaled to re
 nexttile
 for i = 1:length(spikeCount)
     pos = [xc(i)-(0.5*nodeScaleF) yc(i)-(0.5*nodeScaleF) nodeScaleF nodeScaleF];
+    if spikeCount(i) < spikeFreqMin % (spikeCount(i) - minSpikeCountToPlot) / (prctile(spikeCount,95,'all') - minSpikeCountToPlot) <= 0
+        rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
+            'w','EdgeColor','w','LineWidth',0.1)
+%                 rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
+%                     mycolours(ceil(length(mycolours)*((spikeCount(i)- minSpikeCountToPlot)/(prctile(spikeCount,99,'all')-minSpikeCountToPlot))+0.00001),1:3),'EdgeColor','w','LineWidth',0.1)
+    else
         try
-            rectangle('Position', pos, 'Curvature', [1 1], 'FaceColor', ...
-                mycolours(ceil(length(mycolours)*((spikeCount(i) - minSpikeCountToPlot) / (spikeFreqMax-minSpikeCountToPlot))),1:3),'EdgeColor','w','LineWidth',0.1)
+            colorToUse = mycolours(ceil(length(mycolours) * ((spikeCount(i) - minSpikeCountToPlot)/(prctile(spikeCount,99,'all')-minSpikeCountToPlot))),1:3);
+            rectangle('Position',pos,'Curvature',[1 1],'FaceColor',colorToUse,'EdgeColor','w','LineWidth',0.1)
         catch
-            if (spikeCount(i)-minSpikeCountToPlot)/(spikeFreqMax - minSpikeCountToPlot) == 0
-                rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
-                    mycolours(ceil(length(mycolours)*((spikeCount(i) - minSpikeCountToPlot) / (spikeFreqMax-minSpikeCountToPlot))+0.00001),1:3),'EdgeColor','w','LineWidth',0.1)
-            else
-                 rectangle('Position',pos,'Curvature',[1 1],'FaceColor',mycolours(length(mycolours),1:3),'EdgeColor','w','LineWidth',0.1) 
-            end
+            rectangle('Position',pos,'Curvature',[1 1],'FaceColor',mycolours(length(mycolours),1:3),'EdgeColor','w','LineWidth',0.1)
         end
+    end
 end
 ylim([min(yc)-1 max(yc)+1])
 xlim([min(xc)-1 max(xc)+1])

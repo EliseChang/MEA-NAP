@@ -8,7 +8,7 @@ verbose = 0;  % 1 : prints out status, 0 : keep quiet
 
 
 % set firing rate threshold in Hz
-FR_threshold = 0.01; % in Hz or spikes/s
+FR_threshold = 0.02; % Info.duration_s/60; % 0.01; % in Hz or spikes/s
 % get spike counts
 FiringRates = full(sum(spikeMatrix))/Info.duration_s;
 
@@ -21,6 +21,7 @@ Ephys.FR = FiringRates;
 % currently calculates only on active channels (>=FR_threshold)
 % stats  
 % TODO: Why is the rounding necessary ?
+Ephys.FRthr = FR_threshold;
 Ephys.FRmean = round(mean(ActiveFiringRates),3);
 Ephys.FRstd = round(std(ActiveFiringRates),3);
 Ephys.FRsem = round(std(ActiveFiringRates)/(sqrt(length(ActiveFiringRates))),3);

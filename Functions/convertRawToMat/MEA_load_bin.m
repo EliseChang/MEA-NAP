@@ -1,4 +1,4 @@
-function [header,m,channels] = MEA_load_bin(binfile,plt, convertOption)
+function [header,m,channels] = MEA_load_bin(binfile,plt, convertOption, outputDir)
 % note that I (TS) is going to modify this slightly to make it work with
 % any number of channels 
 % also changed the code so that it saves one giant variable 
@@ -39,7 +39,10 @@ if ~exist('convertOption', 'var')
     convertOption = 'whole'; 
 end 
 
-
+dir = pwd;
+if exist('outputDir','var')
+    addpath(outputDir)
+end
 
 %% get header
 [fid] =fopen(binfile)
@@ -88,7 +91,7 @@ fclose(fid);
 %each row is a different channel
 numChannels = length(channels); 
 m=reshape(data,numChannels,floor(length(data)/numChannels));
-% note that I (TS) chaged '60' to numChannels 
+% note that I (TS) changed '60' to numChannels 
 % not sure if there will be any consequences... 
 % need to check through the logic of this code to make sure
 
@@ -123,6 +126,9 @@ sprintf('Saving data ...')
 % the above line saves to specific subfolders 
 
 % OPTION 1: Save all electrodes as a single file (about 2GB variable), only a good idea if your system has 16GB ram / a lot of swap space
+if exist('outputDir','var')
+    cd(outputDir)
+end
 if strcmp(convertOption, 'whole')
     save([binfile(1:length(binfile)-4) '.mat'],'dat','channels','header','uV','ADCz','fs', '-v7.3')
 % OPTION 2: For systems with 8GB ram (or less?), save each electrode in a separate file 
@@ -132,9 +138,9 @@ elseif strcmp(convertOption, 'electrode')
          sprintf('Channel: %d; ',channels(i))
          dat=m(i,:);
          save([binfile(1:length(binfile)-4) filesep binfile(1:length(binfile)-4) '_' num2str(channels(i)) '.mat'],'dat','channels','header','uV','ADCz','fs')
-    end 
-    
-end 
+    end    
+end
+cd(dir) % this will always be the initial directory
 
 end
 

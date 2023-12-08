@@ -1,8 +1,7 @@
-function spikeMatrix = spikeTimesToSpikeMatrix(spikeTimes, duration, fs)
+function spikeMatrix = spikeTimesToSpikeMatrix(spikeTimes, fs, duration)
 
-start_time = 0;
 end_time = duration;
-bin_edges = start_time:1/fs:end_time;
+bin_edges = 0:1/fs:end_time;
 
 numUnits = length(spikeTimes);
 num_bins = length(bin_edges) - 1;

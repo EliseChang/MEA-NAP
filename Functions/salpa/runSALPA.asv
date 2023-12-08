@@ -1,0 +1,45 @@
+function [filteredDat] = runSALPA(dat, lostTime, trialLength, trialOnT, trialOffT)
+
+trialN = length(trialOnT);
+channelsN = size(dat,2);
+filteredDat = zeros(trialLength,channelsN,trialN);
+for trial = 1:trialN
+
+    start = trialOnT(trial);
+    stop =  trialOffT(trial);
+    trialWin = dat(start:stop,:);
+
+    for channel = 1:channelsN
+        
+        if ~any(isnan(trialWin(:,channel)))
+
+            % Get time before depegging
+            channelDat = meanCentre(trialWin(:,channel));
+            thr = 6*std(channelDat); % threshold for finding time of saturation
+            [~,pegDelay] = findpeaks(channelDat,"NPeaks",1, "MinPeakHeight",thr);
+
+            if isempty(pegDelay)
+                warning("Trial %d, channel %d: Stimulation saturation not detected. Check artifact removal.",...
+                    trial, channel)
+                pegDelay = 5;
+            end
+
+            filteredTrace = salpa(channelDat,'t_blankdepeg',pegDelay);
+            filteredDat(:,channel,trial) = filteredTrace(lostTime+1:end);
+
+        else
+            filteredDat
+        end
+    end
+    
+    clear trialWin
+
+end
+
+filteredDat = reshape(permute(filteredDat, [1 3 2]), [], n_channels, 1);
+cd filtered_voltage
+save(strcat(voltage_filenames{n},'_filtd.mat'),"filteredDat")
+cd(homeDir)
+clear dat filteredDat
+
+end

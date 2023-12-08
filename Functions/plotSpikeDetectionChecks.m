@@ -39,7 +39,9 @@ end
 
 % TODO: load to variable
 load(raw_file_name);
-dat = double(dat);
+% TEMP OVERRIDE
+dat = stimDat.preSALPA0_100ms;
+% dat = double(dat);
 
 % convert everything to be in uV for plotting
 if isa(Params.potentialDifferenceUnit, 'char')

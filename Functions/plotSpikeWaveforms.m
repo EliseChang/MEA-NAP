@@ -1,11 +1,23 @@
 function t = plotSpikeWaveforms(channel, incSpikes, spikeTimes, spikeWaveforms, origTrace, fs, methods, figPos)
 
+arguments
+    channel
+    incSpikes
+    spikeTimes
+    spikeWaveforms
+    origTrace
+    fs
+    methods
+    figPos = [1 49 1920 955]
+end
 %     [~, unique_idx, ~] = mergeSpikes(spike_times{channel},'all'); yt
 %     unique spikes for each method -- for now, just plot all spikes
 
 figure('Position',figPos)
-t = tiledlayout(2, ceil(length(methods)/2), 'TileSpacing','compact');
-title(t, ['Electrode ', num2str(channel)])
+t = tiledlayout(2, ceil(length(methods)/2));
+title(t, ['Electrode ', num2str(channel)], 'FontSize', 20)
+anySpikes = 0;
+
 for i = 1:length(methods)
 
     method = methods{i};
@@ -27,7 +39,9 @@ for i = 1:length(methods)
                 plotOrigTrace(f,:) = origTrace(centreFrame-25:centreFrame+25, channel);
             end
         end
+        anySpikes = 1;
     end
+
 %     if ~strcmp(method, 'all')
 %         spk_method = find(unique_idx == i);
 %         spk_waves_method = spikeWaveforms{channel}.(method);
@@ -52,21 +66,36 @@ for i = 1:length(methods)
 %     end
 
     nexttile
-    if exist('plotOrigTrace','var')
+    if ~isempty(plotWaveforms)
         plot(plotOrigTrace', 'linewidth', 0.5, 'color', [0.7 0.7 0.7])
+        hold on
+        plot(plotWaveforms', 'linewidth', 1.0, 'color', [0 0.4470 0.7410])
+        if size(plotWaveforms, 1) > 2
+            plot(mean(plotWaveforms), 'linewidth', 1.5, 'color', [0 0 0])
+        end
+        hold off
     end
-    hold on
-    plot(plotWaveforms', 'linewidth', 1.0, 'color', [0 0.4470 0.7410])
-    plot(mean(plotWaveforms), 'linewidth', 1.5, 'color', [0 0 0])
-    title(method)
+    title(method, 'FontSize',20)
     box off;
     axis tight
     pbaspect([1,2,1]);
 %         ylim([-6*std(trace) 5*std(trace)]);
-    ylabel('Voltage [\muV]')
+    ylabel('Voltage [\muV]', 'FontSize', 16);
     set(gca, 'xcolor', 'none');
+    set(gca, 'FontSize', 16)
     aesthetics
 
     clear method mask allWaveforms plotWaveforms plotOrigTrace
 
+end
+
+if ~anySpikes
+    t = [];
+    disp(['No spikes to display on channel ', num2str(channel), ': not saving plot', newline])
+% else
+%     if postArtifactRmv
+%         legend({'Original trace', 'Filtered trace', 'Mean filtered waveform'}, 'Location','southeastoutside')
+%     else
+%         legend({'Filtered trace', 'Original trace', 'Mean original waveform'}, 'Location','southeastoutside')
+%     end
 end

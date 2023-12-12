@@ -1,4 +1,4 @@
-function batchDetectSpikes(dataPath, savePath, option, files, params)
+function batchDetectSpikes(dataPath, savePath, option, files, params, window)
 
 % Master script for spike detection using CWT method. 
 % Runs spike detection through recordings, cost parameters, electrodes, and wavelets.
@@ -38,6 +38,7 @@ arguments
     option;
     files;
     params;
+    window;
 end
 
 
@@ -205,7 +206,8 @@ for recording = 1:numel(files)
     disp(['File loaded']);
     
     % TEMP override
-    data = file.stimDat.preSALPA0_100ms;
+    fieldName = strcat('postSALPA',window);
+    data = file.stimDat.(fieldName);
 
     try
         channels = file.channels;
@@ -376,7 +378,7 @@ for recording = 1:numel(files)
             % spikeDetectionResult.method = 'CWT';
             spikeDetectionResult.params = params;
             
-            saveName = fullfile(savePath,  strcat(fileName, '_spikes.mat'));
+            saveName = fullfile(savePath,  strcat(fileName, '_spikes_',window,'.mat'));
             disp(['Saving results to: ' saveName]);
             
             varsList = {'spikeTimes', 'channels', 'spikeDetectionResult', ...

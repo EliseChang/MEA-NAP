@@ -10,30 +10,30 @@
 % Directories
 HomeDir = 'D:\MATLAB\MEA-NAP'; % Where the Aanlysis pipeline code is located
 Params.outputDataFolder = fullfile(HomeDir, 'outputs');   % Where to save the output data, leave as '' if same as HomeDir 
-rawData = ''; % fullfile(HomeDir, 'organoids', 'Nov2023DIV150Stim');  % path to raw data .mat files
-Params.priorAnalysisPath = 'D:\MATLAB\MEA-NAP\outputs\OutputData01Nov2023';  % path to prev analysis, leave as [''] if no prior anlaysis
-spikeDetectedData = fullfile(Params.priorAnalysisPath, '1_SpikeDetection','1A_SpikeDetectedData'); % ,'1A_SpikeDetectedData' path to spike-detected data, leave as '' if no previously detected spike data
+rawData = fullfile(HomeDir, 'organoids', 'Nov2023DIV150Stim');  % path to raw data .mat files
+Params.priorAnalysisPath = '';  % path to prev analysis, leave as [''] if no prior anlaysis
+spikeDetectedData = ''; % fullfile(Params.priorAnalysisPath, '1_SpikeDetection','1A_SpikeDetectedData'); % ,'1A_SpikeDetectedData' path to spike-detected data, leave as '' if no previously detected spike data
 
 % Input and output filetype
 spreadsheet_file_type = 'excel'; % 'csv' or 'excel'
-spreadsheet_filename = 'mecp2RecordingsListNew.xlsx';
-sheet = 'Pre-stim'; % specify excel sheet
+spreadsheet_filename = fullfile(HomeDir,'metadata','mecp2RecordingsListNew.xlsx');
+sheet = 'Stim'; % specify excel sheet
 xlRange = 'A2:C11'; % specify range on the sheet (e.g., 'A2:C7' would analyse the first 6 files)
 csvRange = [2, Inf]; % read the data in the range [StartRow EndRow], e.g. [2 Inf] means start reading data from row 2
 Params.output_spreadsheet_file_type = 'csv';  % .xlsx or .csv
 
 % Analysis step settings
-Params.priorAnalysisDate = '01Nov2023'; % prior analysis date in format given in output data folder e.g., '27Sep2021'
-Params.priorAnalysis = 1; % use previously analysed data? 1 = yes, 0 = no
-Params.startAnalysisStep = 2; % if Params.priorAnalysis=0, default is to start with spike detection
+Params.priorAnalysisDate = ''; % prior analysis date in format given in output data folder e.g., '27Sep2021'
+Params.priorAnalysis = 0; % use previously analysed data? 1 = yes, 0 = no
+Params.startAnalysisStep = 1; % if Params.priorAnalysis=0, default is to start with spike detection
 Params.optionalStepsToRun = {''}; % include 'generateCSV' to generate csv for rawData folder
                                   % include 'runStats' to look at feature
                                   % correlation and classification across groups
                                   % include 'combineDIVplots' to combine plots across DIVs
 
 % Spike detection settings
-detectSpikes = 0; % run spike detection? % 1 = yes, 0 = no
-Params.runSpikeCheckOnPrevSpikeData = 1; % whether to run spike detection check without spike detection 
+detectSpikes = 1; % run spike detection? % 1 = yes, 0 = no
+Params.runSpikeCheckOnPrevSpikeData = 0; % whether to run spike detection check without spike detection 
 Params.fs = 25000; % Sampling frequency, HPC: 25000, Axion: 12500;
 Params.dSampF = 25000; % down sampling factor for spike detection check
 Params.potentialDifferenceUnit = 'uV';  % the unit which you are recording electrical signals 
@@ -157,62 +157,66 @@ if Params.ProbThreshPlotChecks == 1
 end
 
 %% Step 1 - spike detection
-
+windows = {'0_40ms','40_80ms','80_120ms','120_160ms','160_200ms'};
+    
 if ((Params.priorAnalysis == 0) || (Params.runSpikeCheckOnPrevSpikeData)) && (Params.startAnalysisStep == 1) 
+        
+        for w = 1:length(windows)
+            window = windows{w};
 
-    if (detectSpikes == 1) || (Params.runSpikeCheckOnPrevSpikeData)
-        addpath(rawData)
-    else
-        addpath(spikeDetectedData)
-    end
+            if (detectSpikes == 1) || (Params.runSpikeCheckOnPrevSpikeData)
+                addpath(rawData)
+            else
+                addpath(spikeDetectedData)
+            end
+            
+            savePath = fullfile(Params.outputDataFolder, ...
+                                strcat('OutputData', Params.Date), ...
+                                '1_SpikeDetection', '1A_SpikeDetectedData');
+        
+%             subsetBatch = ExpName(7:end);
+            % Run spike detection
+            if detectSpikes == 1
+                batchDetectSpikes(rawData, savePath, option, ExpName, Params, window);
+            end
+        
+    %     % Specify where ExperimentMatFiles are stored
+    %     experimentMatFileFolder = fullfile(Params.outputDataFolder, ...
+    %            strcat('OutputData',Params.Date), 'ExperimentMatFiles');
     
-    savePath = fullfile(Params.outputDataFolder, ...
-                        strcat('OutputData', Params.Date), ...
-                        '1_SpikeDetection', '1A_SpikeDetectedData');
-
-%     subsetBatch = ExpName(73:end);
-    % Run spike detection
-    if detectSpikes == 1
-        batchDetectSpikes(rawData, savePath, option, ExpName, Params);
-    end
-    
-    % Specify where ExperimentMatFiles are stored
-    experimentMatFileFolder = fullfile(Params.outputDataFolder, ...
-           strcat('OutputData',Params.Date), 'ExperimentMatFiles');
-
-    % Plot spike detection results 
-    for  ExN = 1:length(ExpName)
-        
-        if Params.runSpikeCheckOnPrevSpikeData
-            spikeDetectedDataOutputFolder = spikeDetectedData;
-        else
-            spikeDetectedDataOutputFolder = fullfile(Params.outputDataFolder, ...
-                strcat('OutputData', Params.Date), '1_SpikeDetection', '1A_SpikeDetectedData'); 
-        end 
-        
-        spikeFilePath = fullfile(spikeDetectedDataOutputFolder, strcat(char(ExpName(ExN)),'_spikes.mat'));
-        load(spikeFilePath,'spikeTimes','spikeDetectionResult','channels','spikeWaveforms')
-
-        experimentMatFilePath = fullfile(experimentMatFileFolder, ...
-            strcat(char(ExpName(ExN)),'_',Params.Date,'.mat'));
-        load(experimentMatFilePath,'Info')
-
-        spikeDetectionCheckGrpFolder = fullfile(Params.outputDataFolder, ...
-            strcat('OutputData',Params.Date), '1_SpikeDetection', '1B_SpikeDetectionChecks', char(Info.Grp));
-        FN = char(Info.FN);
-        spikeDetectionCheckFNFolder = fullfile(spikeDetectionCheckGrpFolder, FN);
-
-        if ~isfolder(spikeDetectionCheckFNFolder)
-            mkdir(spikeDetectionCheckFNFolder)
-        end 
-
-        plotSpikeDetectionChecks(spikeTimes, spikeDetectionResult, ...
-            spikeWaveforms, Info, Params, spikeDetectionCheckFNFolder, oneFigureHandle)
-        
-        % Check whether there are no spikes at all in recording 
-        checkIfAnySpikes(spikeTimes, ExpName{ExN});
-
-    end
+    %     % Plot spike detection results 
+    %     for  ExN = 1:length(ExpName)
+    %         
+    %         if Params.runSpikeCheckOnPrevSpikeData
+    %             spikeDetectedDataOutputFolder = spikeDetectedData;
+    %         else
+    %             spikeDetectedDataOutputFolder = fullfile(Params.outputDataFolder, ...
+    %                 strcat('OutputData', Params.Date), '1_SpikeDetection', '1A_SpikeDetectedData'); 
+    %         end 
+    %         
+    %         spikeFilePath = fullfile(spikeDetectedDataOutputFolder, strcat(char(ExpName(ExN)),'_spikes.mat'));
+    %         load(spikeFilePath,'spikeTimes','spikeDetectionResult','channels','spikeWaveforms')
+    % 
+    %         experimentMatFilePath = fullfile(experimentMatFileFolder, ...
+    %             strcat(char(ExpName(ExN)),'_',Params.Date,'.mat'));
+    %         load(experimentMatFilePath,'Info')
+    % 
+    %         spikeDetectionCheckGrpFolder = fullfile(Params.outputDataFolder, ...
+    %             strcat('OutputData',Params.Date), '1_SpikeDetection', '1B_SpikeDetectionChecks', char(Info.Grp));
+    %         FN = char(Info.FN);
+    %         spikeDetectionCheckFNFolder = fullfile(spikeDetectionCheckGrpFolder, FN);
+    % 
+    %         if ~isfolder(spikeDetectionCheckFNFolder)
+    %             mkdir(spikeDetectionCheckFNFolder)
+    %         end 
+    % 
+    %         plotSpikeDetectionChecks(spikeTimes, spikeDetectionResult, ...
+    %             spikeWaveforms, Info, Params, spikeDetectionCheckFNFolder, oneFigureHandle)
+    %         
+    %         % Check whether there are no spikes at all in recording 
+    %         checkIfAnySpikes(spikeTimes, ExpName{ExN});
+    % 
+        end
 
 end
 

@@ -28,6 +28,7 @@ function [all_spikes, unique_idx, intersect_matrix] = mergeSpikes(spike_times, o
 switch option
     case 'all'
         methods = fieldnames(spike_times);
+        methods(ismember(methods,'thr3')) = []; % TEMP: remove thr3 when merging
     case 'wavelets'
         methods_to_search = {'mea','bior1p5','bior1p3','db2'};
         methods = intersect(methods_to_search, fieldnames(spike_times));

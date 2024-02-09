@@ -201,14 +201,13 @@ for recording = 1:numel(files)
     end 
     
     % Load data
+    fieldName = strcat('preSALPA',window);
     disp(['Loading ' fileName ' ...']);
-    file = load(fileName);
+    % TEMP override
+%     file = load(fileName);
+    data = load(fileName, 'stimDat').stimDat.(fieldName);
     disp(['File loaded']);
     
-    % TEMP override
-    fieldName = strcat('postSALPA',window);
-    data = file.stimDat.(fieldName);
-
     try
         channels = file.channels;
     catch 'MATLAB:nonExistentField'

@@ -40,7 +40,7 @@ end
 % TODO: load to variable
 load(raw_file_name);
 % TEMP OVERRIDE
-dat = stimDat.preSALPA0_100ms;
+% dat = stimDat.preSALPA0_100ms;
 % dat = double(dat);
 
 % convert everything to be in uV for plotting
@@ -241,8 +241,64 @@ if ~Params.showOneFig
 else 
     set(0, 'CurrentFigure', oneFigureHandle);
     clf reset
-end 
+end
 
+%% Plot whole grid of traces
+
+f = figure('Position', [713 50 1310 1306], 'Color', 'white');
+tiledlayout(6,1,'TileSpacing','Compact');
+tilePos = 1:6;
+% excludePos = [1, 8, 57, 64];
+% tilePos(excludePos) = [];
+yAxes = [];
+
+channelSpikeCounts = zeros(1,60);
+allSpikeTrains = cell(1, 60);
+for channel = 1:60
+    spike_train = spikeTimes{channel}.merged * fs;
+    n_plot_spikes = 21;
+    
+    while n_plot_spikes > 20
+        centreFrame = randi([1 round(spike_train(end-1))]);
+%         centreSpikeIdx = randi([1 length(spike_train)-1]);
+%         centreSpikeFrame = spike_train(centreSpikeIdx); % + randi([-20 20])*25;
+        start = centreFrame - 0.04*fs;
+        stop = centreFrame + 0.04*fs;
+        plot_spike_train = spike_train((spike_train >= start) & (spike_train < stop)) - start;
+        n_plot_spikes = length(plot_spike_train);
+    end
+    channelSpikeCounts(channel) = n_plot_spikes;
+    allSpikeTrains{1,channel}.spikeTrain = plot_spike_train;
+    allSpikeTrains{1,channel}.start = start;
+    allSpikeTrains{1,channel}.stop = stop;
+
+end
+[~,plotChannels] = maxk(channelSpikeCounts, 6);
+
+for c = 1:6
+    ax = nexttile;
+    channel = plotChannels(c);
+    spikes = allSpikeTrains{1,channel}.spikeTrain;
+    start = allSpikeTrains{1,channel}.start;
+    stop = allSpikeTrains{1,channel}.stop;    
+    trace = filtered_data(start:stop, channel);
+    
+    plot(trace, 'k-', 'LineWidth', 2)
+    hold on
+    scatter(spikes, repmat(4*std(trace), ...
+    length(spikes), 1), 15, 'v', 'filled', ... 
+    'markerfacecolor','red', ... 
+    'markeredgecolor', 'red', 'linewidth',0.1);
+    
+    box off
+    set(gca,'xcolor','none');
+    set(gca, 'ycolor', 'none')
+    axis fill
+    yAxes = [yAxes, ax.YAxis];
+
+end
+
+linkprop(yAxes, 'Limits');
 
 %% waveforms
 [~, unique_idx, ~] = mergeSpikes(spike_times{channel},'all');

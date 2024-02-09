@@ -39,6 +39,10 @@ function [adjM, adjMci] = adjM_thr_parallel(spikeTimes, method, lag_ms, tail, fs
 % parpool(4); % change 4 to the number of cores
 % Note: If this function is run in a loop, start one parpool before the
 %       loop to avoid restarting at each iteration
+p = gcp('nocreate');
+if isempty(p)
+    parpool(4) % matlabpool('open');
+end
 
 num_frames = duration_s*fs;
 num_nodes = length(spikeTimes);

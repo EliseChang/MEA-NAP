@@ -201,7 +201,7 @@ for recording = 1:numel(files)
     end 
     
     % Load data
-    fieldName = strcat('preSALPA',window);
+    fieldName = strcat('postSALPA',window);
     disp(['Loading ' fileName ' ...']);
     % TEMP override
 %     file = load(fileName);

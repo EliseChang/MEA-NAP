@@ -6,9 +6,9 @@ maskA = logical(patternSeq);
 maskB = logical(~patternSeq);
 
 % Pattern A trials
-trialsA = psthData(maskA,:, :);
-[~,trialOrder] = sort(sum(trialsA,2),'descend');
-trialsSorted = trialsA(trialOrder(1),:, :);
+trialsA = psthData(maskA,:);
+trialOrder = sum(trialsA,2); % [~,trialOrder] sort(sum(trialsA,2),'descend');
+trialsSorted = trialsA(trialOrder, :);
 h(1) = nexttile(t);
 imagesc(trialsSorted)
 xticklabels(xticks*psthBin/fs*1e3)
@@ -17,8 +17,8 @@ clear trialsSorted trialOrder
 
 % Pattern B trials
 trialsB = psthData(maskB,:);
-[~,trialOrder] = sort(sum(trialsB,2),'descend');
-trialsSorted = trialsB(trialOrder(1:3),:);
+trialOrder = sum(trialsB,2); %sort(sum(trialsB,2),'descend');
+trialsSorted = trialsB(trialOrder,:);
 h(2) = nexttile(t);
 imagesc(trialsSorted)
 xticklabels(xticks*psthBin/fs*1e3)

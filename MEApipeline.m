@@ -10,17 +10,17 @@ clear all
 close all 
 restoredefaultpath
 % Directories
-HomeDir = '[INPUT_REQUIRED]'; % Where the MEA-NAP (MEA Network Analysis Pipeline) code is located
-Params.outputDataFolder = '';   % Where to save the output data, leave as '' if same as HomeDir 
-rawData = '[INPUT_REQUIRED]';  % path to raw data .mat files
+HomeDir = '/Users/elise/MEA-NAP'; % Where the MEA-NAP (MEA Network Analysis Pipeline) code is located
+Params.outputDataFolder = fullfile(HomeDir, 'outputs');   % Where to save the output data, leave as '' if same as HomeDir 
+rawData = fullfile(HomeDir, 'mat', 'OrganoidsDIV250Feb2024');  % path to raw data .mat files
 Params.priorAnalysisPath = [''];  % path to prev analysis, leave as [''] if no prior anlaysis
 spikeDetectedData = ''; % path to spike-detected data, leave as '' if no previously detected spike data
 
 % Input and output filetype
-spreadsheet_file_type = 'csv'; % 'csv' or 'excel'
-spreadsheet_filename = '[INPUT_REQUIRED].csv'; 
-sheet = 1; % specify excel sheet
-xlRange = 'A2:C7'; % specify range on the sheet (e.g., 'A2:C7' would analyse the first 6 files)
+spreadsheet_file_type = 'excel'; % 'csv' or 'excel'
+spreadsheet_filename = fullfile(HomeDir, 'metadata','mecp2RecordingsListNew.xlsx'); 
+sheet = 'Baseline'; % specify excel sheet
+xlRange = 'A78:D99'; % specify range on the sheet (e.g., 'A2:C7' would analyse the first 6 files)
 csvRange = [2, Inf]; % read the data in the range [StartRow EndRow], e.g. [2 Inf] means start reading data from row 2
 Params.output_spreadsheet_file_type = 'csv';  % .xlsx or .csv
 
@@ -34,16 +34,16 @@ Params.optionalStepsToRun = {''}; % include 'generateCSV' to generate csv for ra
                                   % include 'combineDIVplots' to combine plots across DIVs
 
 % Spike detection settings
-detectSpikes = 0; % run spike detection? % 1 = yes, 0 = no
+detectSpikes = 1; % run spike detection? % 1 = yes, 0 = no
 Params.runSpikeCheckOnPrevSpikeData = 0; % whether to run spike detection check without spike detection 
 Params.fs = 25000; % Sampling frequency you selected when acquiring data, e.g., MCS: 25000, Axion: 12500;
 Params.dSampF = 25000; % down sampling factor for spike detection check, e.g., can set the same as the sampling frequency
 Params.potentialDifferenceUnit = 'uV';  % Unit for voltage signal, e.g., MCS: uV, Axion: V 
 Params.channelLayout = 'MCS60';  % 'MCS60' (for MEA2100), 'Axion64' (for 6-well plates), or 'MCS60old' (for MEA6100)
-Params.thresholds = {'3', '4', '5'}; % standard deviation multiplier threshold(s), eg. {'2.5', '3.5', '4.5'}
+Params.thresholds = {'4', '5'}; % standard deviation multiplier threshold(s), eg. {'2.5', '3.5', '4.5'}
 Params.wnameList = {'bior1.5', 'bior1.3', 'db2'}; % wavelet methods to use e.g., {'bior1.5', 'bior1.3', 'mea'}; 
 Params.costList = -0.12;
-Params.SpikesMethod = 'bior1p5';  % wavelet methods, e.g., 'bior1p5', or 'mergedAll', or 'mergedWavelet'
+Params.SpikesMethod = 'mergedAll';  % wavelet methods, e.g., 'bior1p5', or 'mergedAll', or 'mergedWavelet'
 
 % Functional connectivity inference settings
 Params.FuncConLagval = [10, 25, 50]; % set the different lag values (in ms), default to [10, 15, 25]
@@ -223,9 +223,9 @@ if ((Params.priorAnalysis == 0) || (Params.runSpikeCheckOnPrevSpikeData)) && (Pa
         if ~isfolder(spikeDetectionCheckFNFolder)
             mkdir(spikeDetectionCheckFNFolder)
         end 
-
-        plotSpikeDetectionChecks(spikeTimes, spikeDetectionResult, ...
-            spikeWaveforms, Info, Params, spikeDetectionCheckFNFolder, oneFigureHandle)
+        
+        % plotSpikeDetectionChecks(spikeTimes, spikeDetectionResult, ...
+        %     spikeWaveforms, Info, Params, spikeDetectionCheckFNFolder, oneFigureHandle)
         
         % Check whether there are no spikes at all in the recording 
         checkIfAnySpikes(spikeTimes, ExpName{ExN});

@@ -165,6 +165,7 @@ for recording = 1:numel(files)
     if isfield(params, 'electrodesToGroundPerRecording')
         if ~isempty(params.('electrodesToGroundPerRecording'))
             groundElectrodeStr = params.('electrodesToGroundPerRecording'){recording}; 
+            
             if isstr(groundElectrodeStr)
                 groundElectrodeCell = strsplit(groundElectrodeStr,', ');
                 groundElectrodeVec = str2double(groundElectrodeCell);
@@ -173,12 +174,12 @@ for recording = 1:numel(files)
             end 
             grd = groundElectrodeVec;
 
-            if (params.electrodesToGroundPerRecordingUseName == 1) && ~isnan(grd)
+            if (params.electrodesToGroundPerRecordingUseName == 1)% && ~isnan(grd)
                 % Convert from the channel name we want to ground, to the
                 % index within Params.channels
-                new_grd = zeros(length(grd), 1);
+                new_grd = zeros(1, length(grd));
                 for grd_idx = 1:length(grd)
-                    new_grd(grd_idx) = find(params.channels{recording} == grd(grd_idx));
+                    new_grd(grd_idx) = find(params.channels == grd(grd_idx)); % params.channels(recording)
 
                 end 
                 grd = new_grd;

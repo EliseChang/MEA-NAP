@@ -45,6 +45,10 @@ Params.wnameList = {'bior1.5', 'bior1.3', 'db2'}; % wavelet methods to use e.g.,
 Params.costList = -0.12;
 Params.SpikesMethod = 'mergedAll';  % wavelet methods, e.g., 'bior1p5', or 'mergedAll', or 'mergedWavelet'
 
+% Grounding
+Params.grdElecsIncluded = 1; % grounded electrodes are specified for each recording in 4th column of the spreadsheet as comma+space (, )-separated lists
+Params.electrodesToGroundPerRecordingUseName = 1;  % 1 = electrode IDs given, 0 = electrodes indices given
+
 % Functional connectivity inference settings
 Params.FuncConLagval = [10, 25, 50]; % set the different lag values (in ms), default to [10, 15, 25]
 Params.TruncRec = 0; % truncate recording? 1 = yes, 0 = no
@@ -189,9 +193,10 @@ if ((Params.priorAnalysis == 0) || (Params.runSpikeCheckOnPrevSpikeData)) && (Pa
                         strcat('OutputData', Params.Date), ...
                         '1_SpikeDetection', '1A_SpikeDetectedData');
     
+    subsetBatch = ExpName(21:end);
     % Run spike detection
     if detectSpikes == 1
-        batchDetectSpikes(rawData, savePath, option, ExpName, Params);
+        batchDetectSpikes(rawData, savePath, option, subsetBatch, Params);
     end 
     
     % Specify where ExperimentMatFiles are stored

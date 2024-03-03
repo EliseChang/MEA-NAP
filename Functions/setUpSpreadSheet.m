@@ -6,6 +6,11 @@ if strcmp(spreadsheet_file_type, 'excel')
     ExpName = txt(:,1); % name of recording
     ExpGrp = txt(:,3); % name of experimental group
     ExpDIV = num(:,1); % DIV number
+    
+    if Params.grdElecsIncluded
+        Params.electrodesToGroundPerRecording = txt(:,4);
+    end
+    
 elseif strcmp(spreadsheet_file_type, 'csv')
     opts = detectImportOptions(spreadsheet_filename);
     opts.Delimiter = ',';
@@ -27,18 +32,18 @@ elseif strcmp(spreadsheet_file_type, 'csv')
     ExpName = csv_data{:, 1};
     ExpGrp = csv_data{:, 3};
     ExpDIV = csv_data{:, 2};
-
-    Params.electrodesToGroundPerRecordingUseName = 1;  % use name (instead of index) to ground electrodes
-
-    if sum(strcmp('Ground',csv_data.Properties.VariableNames))
-        Params.electrodesToGroundPerRecording = csv_data.('Ground'); % this should be a 1 x N cell array 
-        if ~iscell(Params.electrodesToGroundPerRecording)
-            Params.electrodesToGroundPerRecording = {Params.electrodesToGroundPerRecording};
-        end 
-    else 
-        Params.electrodesToGroundPerRecording = [];
-    end 
     
+    % TODO: fix for csv files without over-riding
+    % if sum(strcmp('Ground',csv_data.Properties.VariableNames))
+    %     Params.electrodesToGroundPerRecording = csv_data.('Ground'); % this should be a 1 x N cell array 
+    %     if ~iscell(Params.electrodesToGroundPerRecording)
+    %         Params.electrodesToGroundPerRecording = {Params.electrodesToGroundPerRecording};
+    %     end 
+    % else 
+    %     Params.electrodesToGroundPerRecording = [];
+    % end 
+    
+    % TODO: check this?
     if 1 - sum(strcmp('ChannelLayout', csv_data.Properties.VariableNames))
         Params.channelLayoutPerRecording = cellstr(repmat(Params.channelLayout, size(csv_data, 1), 1));
     else

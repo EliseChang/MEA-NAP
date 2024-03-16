@@ -47,6 +47,7 @@ Params.multi_template_method = 'amplitudeAndWidthAndSymmetry';  % options are PC
 % Filtering low and high pass frequencies 
 Params.filterLowPass = 600;
 Params.filterHighPass = 8000;
+Params.LFPCutoff = 300; % Cut-off frequency for low-pass filtering to obtain LFP
 
 if Params.filterHighPass > Params.fs / 2
     fprintf(['WARNING: high pass frequency specified is above \n ', ...

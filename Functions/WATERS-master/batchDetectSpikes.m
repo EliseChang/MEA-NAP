@@ -213,6 +213,12 @@ for recording = 1:numel(files)
         data = data(start_frame:end_frame, :);
         params.duration = length(data)/fs;
     end
+
+    % LFP
+    cutoff = params.LFPCutoff;
+    [b_low, a_low] = butter(3, cutoff/fs, "low");
+    lowFreq = filtfilt(b_low, a_low, data);
+    LFP = downsample(lowFreq, fs/1000); % downsample to 1kHz
     
     for L = costList
         saveName = [savePath fileName(1:end-4) '_L_' num2str(L) '_spikes.mat'];
@@ -222,7 +228,7 @@ for recording = 1:numel(files)
             disp('Detecting spikes...');
             disp(['L = ' num2str(L)]);
             
-            % Pre-allocate vectors for storing spike features
+            % Pre-allocate vectors for storing spike features and LFPs
             spikeTimes = cell(1,num_channels);
             spikeWaveforms = cell(1,num_channels);
             mad = zeros(1,num_channels);
@@ -235,8 +241,8 @@ for recording = 1:numel(files)
                     'Please check that the data has been processed correctly. For now I will just run spike detection up to the number of' ...
                     'available channels, assuming that the ordering of channels is still okay \n'])
                 channels = channels(1:numChannelsInData);
-            end 
-            
+            end
+
             % Run spike detection
             for channel = 1:length(channels)
                 
@@ -353,7 +359,7 @@ for recording = 1:numel(files)
             disp(['Saving results to: ' saveName]);
             
             varsList = {'spikeTimes', 'channels', 'spikeDetectionResult', ...
-                'spikeWaveforms', 'thresholds'};
+                'spikeWaveforms', 'thresholds', 'LFP'};
             save(saveName, varsList{:}, '-v7.3');
         end
     end

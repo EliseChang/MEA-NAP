@@ -20,7 +20,7 @@ spikeDetectedData = ''; % path to spike-detected data, leave as '' if no previou
 spreadsheet_file_type = 'excel'; % 'csv' or 'excel'
 spreadsheet_filename = fullfile(HomeDir, 'metadata','mecp2RecordingsListNew.xlsx'); 
 sheet = 'Baseline'; % specify excel sheet
-xlRange = 'A78:D99'; % specify range on the sheet (e.g., 'A2:C7' would analyse the first 6 files)
+xlRange = 'A40:D76'; % specify range on the sheet (e.g., 'A2:C7' would analyse the first 6 files)
 csvRange = [2, Inf]; % read the data in the range [StartRow EndRow], e.g. [2 Inf] means start reading data from row 2
 Params.output_spreadsheet_file_type = 'csv';  % .xlsx or .csv
 
@@ -193,11 +193,10 @@ if ((Params.priorAnalysis == 0) || (Params.runSpikeCheckOnPrevSpikeData)) && (Pa
                         strcat('OutputData', Params.Date), ...
                         '1_SpikeDetection', '1A_SpikeDetectedData');
     
-    subsetBatch = ExpName(21:end);
     % Run spike detection
     if detectSpikes == 1
-        batchDetectSpikes(rawData, savePath, option, subsetBatch, Params);
-    end 
+        batchDetectSpikes(rawData, savePath, option, ExpName, Params);
+    end
     
     % Specify where ExperimentMatFiles are stored
     experimentMatFileFolder = fullfile(Params.outputDataFolder, ...
@@ -246,40 +245,59 @@ if Params.priorAnalysis==0 || Params.priorAnalysis==1 && Params.startAnalysisSte
     experimentMatFolderPath = fullfile(Params.outputDataFolder, ...
         strcat('OutputData',Params.Date), 'ExperimentMatFiles');
 
-    for  ExN = 1:length(ExpName)
-            
-        experimentMatFname = strcat(char(ExpName(ExN)),'_',Params.Date,'.mat'); 
-        experimentMatFpath = fullfile(experimentMatFolderPath, experimentMatFname);
-        load(experimentMatFpath, 'Info')
-
-        % extract spike matrix, spikes times and associated info
-        disp(char(Info.FN))
-
-        if Params.priorAnalysis==1 && Params.startAnalysisStep==2
-            spikeDetectedDataFolder = spikeDetectedData;
-        else
-            if detectSpikes == 1
-                spikeDetectedDataFolder = fullfile(Params.outputDataFolder, ...
-                    strcat('OutputData', Params.Date), '1_SpikeDetection', ...
-                    '1A_SpikeDetectedData');
-            else
-                spikeDetectedDataFolder = spikeDetectedData;
-            end
-        end
-        
-        channelLayout =  Params.channelLayoutPerRecording{ExN};
-        [spikeMatrix,spikeTimes,Params,Info] = formatSpikeTimes(... 
-            char(Info.FN), Params, Info, spikeDetectedDataFolder, channelLayout);
-
-        % initial run through to establish max values for scaling
-        spikeFreqMax(ExN) = prctile((downSampleSum(full(spikeMatrix), Info.duration_s)),95,'all');
-        
-        infoFnFilePath = fullfile(experimentMatFolderPath, ...
-                          strcat(char(Info.FN),'_',Params.Date,'.mat'));
-        save(infoFnFilePath, 'Info', 'Params', 'spikeTimes', 'spikeMatrix')
-
-        clear spikeTimes
-    end
+    % for  ExN = 1:length(ExpName)
+    % 
+    %     experimentMatFname = strcat(char(ExpName(ExN)),'_',Params.Date,'.mat'); 
+    %     experimentMatFpath = fullfile(experimentMatFolderPath, experimentMatFname);
+    %     load(experimentMatFpath, 'Info')
+    % 
+    %     % extract spike matrix, spikes times and associated info
+    %     disp(char(Info.FN))
+    % 
+    %     if Params.priorAnalysis==1 && Params.startAnalysisStep==2
+    %         spikeDetectedDataFolder = spikeDetectedData;
+    %     else
+    %         if detectSpikes == 1
+    %             spikeDetectedDataFolder = fullfile(Params.outputDataFolder, ...
+    %                 strcat('OutputData', Params.Date), '1_SpikeDetection', ...
+    %                 '1A_SpikeDetectedData');
+    %         else
+    %             spikeDetectedDataFolder = spikeDetectedData;
+    %         end
+    %     end
+    % 
+    %     % TEMP (has now been included in batchSpikeDetect): LFP
+    %     load(fullfile(rawData, ExpName{ExN}), "-mat", "dat");
+    %     cutoff = 300;
+    %     [b_low, a_low] = butter(3, cutoff/25e3, "low");
+    %     lowFreq = filtfilt(b_low, a_low, dat);
+    %     downsampleFreq = 1000;
+    %     LFP = medianCentre(downsample(lowFreq, Params.fs/downsampleFreq)); % downsample to 1kHz
+    % 
+    %     % % PSD calculation
+    %     % specWin = 200; % no. sampling frames per window
+    %     % [~, w, t] = spectrogram(LFP(:,1), specWin, [], [], downsampleFreq);
+    %     % chPSDs = zeros(length(w), length(t), length(Params.channels));
+    %     % for channel = 1:length(Params.channels)
+    %     %     chLFP = LFP(:,channel);
+    %     %     [~, PSD] = spectrogram(chLFP, specWin, [], [], downsampleFreq, "psd");
+    %     %     chPSDs(:, :, channel) = PSD;
+    %     % end
+    %     % networkAvgPSD = mean(chPSDs, 3);
+    % 
+    %     channelLayout =  Params.channelLayout; %PerRecording{ExN};
+    %     [spikeMatrix,spikeTimes,Params,Info] = formatSpikeTimes(... 
+    %         char(Info.FN), Params, Info, spikeDetectedDataFolder, channelLayout);
+    % 
+    %     % initial run through to establish max values for scaling
+    %     spikeFreqMax(ExN) = prctile((downSampleSum(full(spikeMatrix), Info.duration_s)),95,'all');
+    % 
+    %     infoFnFilePath = fullfile(experimentMatFolderPath, ...
+    %                       strcat(char(Info.FN),'_',Params.Date,'.mat'));
+    %     save(infoFnFilePath, 'Info', 'Params', 'spikeTimes', 'spikeMatrix', 'LFP')
+    % 
+    %     clear spikeTimes
+    % end
 
     % extract and plot neuronal activity
     
@@ -289,16 +307,16 @@ if Params.priorAnalysis==0 || Params.priorAnalysis==1 && Params.startAnalysisSte
 
     disp('Electrophysiological properties')
 
-    spikeFreqMax = max(spikeFreqMax);
+    % spikeFreqMax = max(spikeFreqMax);
 
     for  ExN = 1:length(ExpName)
         
         experimentMatFname = strcat(char(ExpName(ExN)),'_',Params.Date,'.mat'); 
         experimentMatFpath = fullfile(experimentMatFolderPath, experimentMatFname);
-        load(experimentMatFpath,'Info','Params','spikeTimes','spikeMatrix');
+        load(experimentMatFpath,'Info','spikeTimes','spikeMatrix','LFP'); %'Params'
 
         % get firing rates and burst characterisation
-        Ephys = firingRatesBursts(spikeMatrix,Params,Info);
+        % Ephys = firingRatesBursts(spikeMatrix,Params,Info);
         
         idvNeuronalAnalysisGrpFolder = fullfile(Params.outputDataFolder, ...
             strcat('OutputData',Params.Date), '2_NeuronalActivity', ...
@@ -314,25 +332,25 @@ if Params.priorAnalysis==0 || Params.priorAnalysis==1 && Params.startAnalysisSte
         end 
 
         % generate and save raster plot
-        rasterPlot(char(Info.FN),spikeMatrix,Params,spikeFreqMax, idvNeuronalAnalysisFNFolder, oneFigureHandle)
+        rasterPlot(char(Info.FN),spikeMatrix,LFP,Params,[], idvNeuronalAnalysisFNFolder, oneFigureHandle) %spikeFreqMax
         % electrode heat maps
-        coords = Params.coords{ExN};
-        electrodeHeatMaps(char(Info.FN), spikeMatrix, Info.channels, ... 
-            spikeFreqMax,Params, coords, idvNeuronalAnalysisFNFolder, oneFigureHandle)
-        % half violin plots
-        firingRateElectrodeDistribution(char(Info.FN), Ephys, Params, ... 
-            Info, idvNeuronalAnalysisFNFolder, oneFigureHandle)
+        % coords = Params.coords{ExN};
+        % electrodeHeatMaps(char(Info.FN), spikeMatrix, Info.channels, ... 
+        %     spikeFreqMax,Params, coords, idvNeuronalAnalysisFNFolder, oneFigureHandle)
+        % % half violin plots
+        % firingRateElectrodeDistribution(char(Info.FN), Ephys, Params, ... 
+        %     Info, idvNeuronalAnalysisFNFolder, oneFigureHandle)
 
-        infoFnFilePath = fullfile(experimentMatFolderPath, ...
-                          strcat(char(Info.FN),'_',Params.Date,'.mat'));
-        save(infoFnFilePath,'Info','Params','spikeTimes','Ephys', '-v7.3')
+        % infoFnFilePath = fullfile(experimentMatFolderPath, ...
+        %                   strcat(char(Info.FN),'_',Params.Date,'.mat'));
+        % save(infoFnFilePath,'Info','Params','spikeTimes','Ephys', '-v7.3')
 
         clear spikeTimes spikeMatrix
 
     end
 
     % create combined plots across groups/ages
-    PlotEphysStats(ExpName,Params,HomeDir, oneFigureHandle)
+    % PlotEphysStats(ExpName,Params,HomeDir, oneFigureHandle)
     saveEphysStats(ExpName, Params)
     cd(HomeDir)
 

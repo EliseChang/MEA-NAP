@@ -39,7 +39,7 @@ Params.spikeCutoutWin = 25; % frames
 Params.calculateSNR = 1;
 
 % Refractory period (for spike detection and adapting template) (ms)
-Params.refPeriod = 1; 
+Params.refPeriod = 0.8; 
 Params.getTemplateRefPeriod = 2;
 
 Params.nSpikes = 100000;

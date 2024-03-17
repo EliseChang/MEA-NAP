@@ -1,5 +1,5 @@
 function spikeFrames = detectSpikesWavelet(...
-    Signal, SFr, Wid, Ns, option, L, wname, PltFlg, CmtFlg)
+    Signal, SFr, Wid, Refract, Ns, option, L, wname, PltFlg, CmtFlg)
 
 % DETECT_SPIKES_WAVELET wavelet based algorithm for detection of transients
 % from neural data.
@@ -12,6 +12,8 @@ function spikeFrames = detectSpikesWavelet(...
 %
 %   Wid - 1 x 2 vector of expected minimum and maximum width [msec] of transient
 %   to be detected Wid=[Wmin Wmax]. For most practical purposes Wid=[0.5 1.0];
+%   
+%   Refract - (scalar): refractory period in ms
 %
 %   Ns - (scalar): the number of scales to use in detection (Ns >= 2);
 %
@@ -379,7 +381,7 @@ function fcn = parse(Index,SFr,Wid)
 %The real challenge here is to merge multiple 1's that belong to the same
 %spike into one event and to locate that event
 
-Refract = 0.1;    %[ms] the refractory period -- can't resolve spikes
+% Refract = 0.1;    %[ms] the refractory period -- can't resolve spikes
 %that are closer than Refract;
 Refract = round(Refract * SFr);
 

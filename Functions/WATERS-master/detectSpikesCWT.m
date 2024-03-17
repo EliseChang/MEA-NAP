@@ -188,15 +188,15 @@ elseif startsWith(wname, 'mea') && multiple_templates
             spikeTimes = [];
             for segment = 1:round(length(trace)/fs/chunk_length)
                 if j+(chunk_length*fs)<=length(trace)
-                    spikeVec = j + detectSpikesWavelet(trace(j:j+(chunk_length*fs)), fs/1000, Wid, Ns, 'l', L, wavelet_name, 0, 0);
+                    spikeVec = j + detectSpikesWavelet(trace(j:j+(chunk_length*fs)), fs/1000, Wid, refPeriod, Ns, 'l', L, wavelet_name, 0, 0);
                 else
-                    spikeVec = j + detectSpikesWavelet(trace(j:end), fs/1000, Wid, Ns, 'l', L, wavelet_name, 0, 0);
+                    spikeVec = j + detectSpikesWavelet(trace(j:end), fs/1000, Wid, refPeriod, Ns, 'l', L, wavelet_name, 0, 0);
                 end
                 spikeTimes = horzcat(spikeTimes, spikeVec);
                 j = j+(chunk_length*fs);
             end
         else
-            spikeTimes = detectSpikesWavelet(trace, fs/1000, Wid, Ns, 'l', L, wavelet_name, 0, 0);
+            spikeTimes = detectSpikesWavelet(trace, fs/1000, Wid, refPeriod, Ns, 'l', L, wavelet_name, 0, 0);
         end 
         % Align spikes by negative peak & remove artifacts by amplitude
         [spikeTimes, spikeWaveforms, ~] = alignPeaks(spikeTimes, 'frames', fs, trace, win, remove_artifacts,...
@@ -223,7 +223,7 @@ else
         spikeTimes = [];
         for segment = 1:round(length(trace)/fs/chunk_length)
             if j+(chunk_length*fs)<=length(trace)
-                spikeVec = j + detectSpikesWavelet(trace(j:j+(chunk_length*fs)), fs/1000, Wid, Ns, 'l', L, wname, 0, 0);
+                spikeVec = j + detectSpikesWavelet(trace(j:j+(chunk_length*fs)), fs/1000, Wid, refPeriod, Ns, 'l', L, wname, 0, 0);
             else
                 spikeVec = j + detectSpikesWavelet(trace(j:end), fs/1000, Wid, Ns, 'l', L, wname, 0, 0);
             end
@@ -231,7 +231,7 @@ else
             j = j+(chunk_length*fs);
         end
     else 
-        spikeTimes = detectSpikesWavelet(trace, fs/1000, Wid, Ns, 'l', L, wname, 0, 0);
+        spikeTimes = detectSpikesWavelet(trace, fs/1000, Wid, refPeriod, Ns, 'l', L, wname, 0, 0);
     end 
     % Align spikes by negative peak & remove artifacts by amplitude
     [spikeTimes, spikeWaveforms, ~] = alignPeaks(spikeTimes, 'frames', fs, trace, win, remove_artifacts,...

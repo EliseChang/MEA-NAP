@@ -27,20 +27,22 @@ Params.multiplier = 3.5; % multiplier to use extracting spikes for wavelet (not 
 % 'Organoid 180518 slice 7 old MEA 3D stim recording 3_L_-0.3_spikes_threshold_ref.mat'));
 
 Params.custom_threshold_method_name = {'thr4p5'};
-Params.remove_artifacts = 0;
+Params.remove_artifacts = 1;
 Params.nScales = 5;
 Params.wid = [0.4000 0.8000];
 Params.grd = [];
 Params.unit = 's';
 Params.minPeakThrMultiplier = -5;
 Params.maxPeakThrMultiplier = -100;
-Params.posPeakThrMultiplier = 15;
+Params.posPeakThrMultiplier = 1000;
+Params.spikeCutoutWin = 25; % frames
+Params.calculateSNR = 1;
 
 % Refractory period (for spike detection and adapting template) (ms)
 Params.refPeriod = 1; 
 Params.getTemplateRefPeriod = 2;
 
-Params.nSpikes = 10000;
+Params.nSpikes = 100000;
 Params.multiple_templates = 0; % whether to get multiple templates to adapt (1: yes, 0: no)
 Params.multi_template_method = 'amplitudeAndWidthAndSymmetry';  % options are PCA, spikeWidthAndAmplitude, or amplitudeAndWidthAndSymmetry
  

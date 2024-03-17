@@ -1,4 +1,4 @@
-function [spikeTimes, spikeWaveforms] = alignPeaks(spikeTimes, trace, win,...
+function [newSpikeTimes, spikeWaveforms, spikeFreeTrace] = alignPeaks(spikeTimes, unit, fs, trace, win,...
     artifactFlg, varargin)
 
 % Description:
@@ -6,6 +6,8 @@ function [spikeTimes, spikeWaveforms] = alignPeaks(spikeTimes, trace, win,...
 
 % INPUT:
 %   spikeTimes: vector containing spike times
+%   unit: unit in which spike times are given ('ms' | 's' | 'frames')
+%   fs: sampling frequency (Hz)
 %   trace: [n x 1] filtered voltage trace
 %   win: [scalar] window around the spike in [frames]; 
 %        this is the width of the bin that is used to search for the peak 
@@ -22,19 +24,25 @@ function [spikeTimes, spikeWaveforms] = alignPeaks(spikeTimes, trace, win,...
 % OUTPUT:
 %   spikeTimes: [#spikes x 1] new spike times aligned to the negative amplitude peak
 %   spikeWaveforms: [51 x #spikes] waveforms of the detected spikes
+%   spikeFreeTrace: [#frames-#spikes*win x 1] filtered voltage trace with spike cut-outs removed
 
 % Author:
 %   Jeremy Chabros, University of Cambridge, 2020
 %   email: jjc80@cam.ac.uk
 %   github.com/jeremi-chabros
 
-% NOTE: currently 'win' refers to the width of the bin that is searched for
-% the peak, NOT to the width of the waveform (hard-coded to 25);
-% TODO: Pass it as an argument
+if strcmp(unit, 'ms')
+    spikeFrames = round(spikeTimes*(fs/1000));
+elseif strcmp(unit, 's')
+    spikeFrames = round(spikeTimes*fs);
+elseif strcmp(unit,'frames')
+    spikeFrames = spikeTimes;
+end
+
 waveform_width = 25;
 
 % Obtain thresholds for artifact removal
-threshold = median(trace) - median(abs(trace - mean(trace)))/0.6745;
+threshold = median(trace) - median(abs(trace))/0.6745;
 
 % TODO: should be a user option to use multiplier or absolute threshold
 % Comment out to use the multiplier
@@ -51,16 +59,16 @@ if artifactFlg
     posPeakThr = varargin{3}; % % e.g. 100 uV
 end
 
-sFr = zeros(length(spikeTimes),1);
-spikeWaveforms = zeros(length(spikeTimes),waveform_width*2+1);
-
-for i = 1:length(spikeTimes)
+sFr = zeros(length(spikeFrames),1);
+spikeWaveforms = zeros(length(spikeFrames),waveform_width*2+1);
+spikeFreeTrace = trace;
+for i = 1:length(spikeFrames)
     
-    if spikeTimes(i)+win < length(trace)-1 && spikeTimes(i)-win > 1
+    if spikeFrames(i)+win < length(trace)-1 && spikeFrames(i)-win > 1
         
         % Look into a window around the spike
-        bin = trace(spikeTimes(i)-win:spikeTimes(i)+win);
-        
+        bin = trace(spikeFrames(i)-win:spikeFrames(i)+win);
+        spikeFreeTrace(spikeFrames(i)-win:spikeFrames(i)+win) = NaN;
         negativePeak = min(bin);
         positivePeak = max(bin);
         pos = find(bin == negativePeak);
@@ -68,18 +76,18 @@ for i = 1:length(spikeTimes)
         % Remove artifacts and assign new timestamps
         if artifactFlg
             if (negativePeak < minPeakThr) && (positivePeak < posPeakThr) && (negativePeak > maxPeakThr)
-                newSpikeTime = spikeTimes(i)+pos-win;
-                if newSpikeTime+waveform_width < length(trace) && newSpikeTime-waveform_width > 1
-                    waveform = trace(newSpikeTime-waveform_width:newSpikeTime+waveform_width);
-                    sFr(i) = newSpikeTime;
+                newSpikeFrame = spikeFrames(i)+pos-win;
+                if newSpikeFrame+waveform_width < length(trace) && newSpikeFrame-waveform_width > 1
+                    waveform = trace(newSpikeFrame-waveform_width:newSpikeFrame+waveform_width);
+                    sFr(i) = newSpikeFrame;
                     spikeWaveforms(i, :) = waveform;
                 end
             end
         else
-            newSpikeTime = spikeTimes(i)+pos-win;
-            if newSpikeTime+waveform_width < length(trace) && newSpikeTime-waveform_width > 1
-                waveform = trace(newSpikeTime-waveform_width:newSpikeTime+waveform_width);
-                sFr(i) = newSpikeTime;
+            newSpikeFrame = spikeFrames(i)+pos-win;
+            if newSpikeFrame+waveform_width < length(trace) && newSpikeFrame-waveform_width > 1
+                waveform = trace(newSpikeFrame-waveform_width:newSpikeFrame+waveform_width);
+                sFr(i) = newSpikeFrame;
                 spikeWaveforms(i, :) = waveform;
             end
         end
@@ -88,7 +96,14 @@ end
 
 % Pre-allocation & logical indexing made it a lot faster
 % than using (end+1) indexing in the loop above
-spikeTimes = sFr(sFr~=0);
-spikeWaveforms = spikeWaveforms(sFr~=0,:);
+% Convert back to original units
+if strcmp(unit, 'ms')
+    newSpikeTimes = sFr/(fs/1000);
+elseif strcmp(unit, 's')
+    newSpikeTimes = sFr/fs;
+elseif strcmp(unit, 'frames')
+    newSpikeTimes = sFr;
+end
+spikeFreeTrace = rmmissing(spikeFreeTrace); % remove NaN values
 end
 

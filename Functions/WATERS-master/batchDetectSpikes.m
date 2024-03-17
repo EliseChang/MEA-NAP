@@ -60,7 +60,6 @@ multiplier = params.multiplier;
 nSpikes = params.nSpikes;
 nScales = params.nScales;
 wid = params.wid;
-grd = params.grd;
 costList = params.costList;
 wnameList = params.wnameList;
 minPeakThrMultiplier = params.minPeakThrMultiplier;
@@ -199,6 +198,7 @@ for recording = 1:numel(files)
     fs = file.fs;
     ttx = contains(fileName, 'TTX');
     params.duration = length(data)/fs;
+    clear file
     
     % Truncate the data if specified
     if isfield(params, 'subsample_time')
@@ -214,11 +214,15 @@ for recording = 1:numel(files)
         params.duration = length(data)/fs;
     end
 
-    % LFP
-    cutoff = params.LFPCutoff;
-    [b_low, a_low] = butter(3, cutoff/fs, "low");
-    lowFreq = filtfilt(b_low, a_low, data);
-    LFP = downsample(lowFreq, fs/1000); % downsample to 1kHz
+    % Filter data
+    wn = [params.filterLowPass params.filterHighPass] / (fs / 2);
+    [b, a] = butter(3, wn); % 3rd-order Butterworth filter
+    filtData = filtfilt(b, a, data);
+    clear data
+    % % Get low-frequency component
+    % [b_low, a_low] = butter(3, params.LFPCutoff/fs, "low");
+    % lowFreq = filtfilt(b_low, a_low, data);
+    % LFP = downsample(lowFreq, fs/1000); % downsample to 1kHz
     
     for L = costList
         saveName = [savePath fileName(1:end-4) '_L_' num2str(L) '_spikes.mat'];
@@ -228,14 +232,15 @@ for recording = 1:numel(files)
             disp('Detecting spikes...');
             disp(['L = ' num2str(L)]);
             
-            % Pre-allocate vectors for storing spike features and LFPs
+            % Pre-allocate vectors for storing trace and spike features and LFPs
             spikeTimes = cell(1,num_channels);
             spikeWaveforms = cell(1,num_channels);
-            mad = zeros(1,num_channels);
+            medianAbsDev = zeros(1,num_channels);
             variance = zeros(1,num_channels);
             absThreshold = zeros(1, num_channels);
+            SNR = zeros(1, num_channels);
 
-            numChannelsInData = size(data, 2);
+            numChannelsInData = size(filtData, 2);
             if numChannelsInData ~= length(channels) 
                 fprintf(['MAJOR WARNING: the provided list of channels has a different length than the number of channels in the data, ' ...
                     'Please check that the data has been processed correctly. For now I will just run spike detection up to the number of' ...
@@ -252,7 +257,10 @@ for recording = 1:numel(files)
                 waveStruct = struct();
                 thresholdStruct = struct();
 
-                trace = data(:, channel);
+                trace = filtData(:, channel);
+                trace = trace - mean(trace);
+
+                % calculate
                 
                 for wname = 1:numel(wnameList)
                     
@@ -274,8 +282,8 @@ for recording = 1:numel(files)
                         end 
                         
                         
-                        [spikeFrames, spikeWaves, ~, threshold] = ...
-                            detectSpikesCWT(trace,fs,wid,actual_wname,L,nScales, ...
+                        [spikeFrames, spikeWaves, threshold] = ...
+                            detectSpikesCWT(trace,fs,params.spikeCutoutWin,wid,actual_wname,L,nScales, ...
                             multiplier,nSpikes,ttx, minPeakThrMultiplier, ...
                             maxPeakThrMultiplier, posPeakThrMultiplier, ...
                             params.multiple_templates, params.multi_template_method, ...
@@ -294,26 +302,29 @@ for recording = 1:numel(files)
                                 valid_wname_w_idx = strcat(valid_wname, num2str(cell_idx));
                                 switch unit
                                     case 'ms'
-                                        spikeStruct.(valid_wname_w_idx) = custom_spike_frames/(fs/1000);
+                                        sT = custom_spike_frames/(fs/1000);
                                     case 's'
-                                        spikeStruct.(valid_wname_w_idx) = custom_spike_frames/fs;
+                                        sT = custom_spike_frames/fs;
                                     case 'frames'
-                                        spikeStruct.(valid_wname_w_idx) = custom_spike_frames;
+                                        sT = custom_spike_frames;
                                 end
                                 waveStruct.(valid_wname_w_idx) = custom_spike_wave;
+                                spikeStruct.(valid_wname_w_idx) = sT;
                             end 
                             
                         else
                             switch unit
                                 case 'ms'
-                                    spikeStruct.(valid_wname) = spikeFrames/(fs/1000);
+                                    sT = spikeFrames/(fs/1000);
                                 case 's'
-                                    spikeStruct.(valid_wname) = spikeFrames/fs;
+                                    sT = spikeFrames/fs;
                                 case 'frames'
-                                    spikeStruct.(valid_wname) = spikeFrames;
+                                    sT = spikeFrames;
                             end
+                            spikeStruct.(valid_wname) = sT;      
                             waveStruct.(valid_wname) = spikeWaves;
-                        end 
+                        end
+
                     else
                         waveStruct.(valid_wname) = [];
                         spikeStruct.(valid_wname) = [];
@@ -321,22 +332,52 @@ for recording = 1:numel(files)
                     end
                 end
                 
-                thresholds{channel} = thresholdStruct;
-                spikeTimes{channel} = spikeStruct;
-                spikeWaveforms{channel} = waveStruct;
+                % Optionally store merged spike times and waveforms and calculate SNR
+                if ~ismember(channel, grd)
+                    if strcmp(params.SpikesMethod,'merged') || strcmp(params.SpikesMethod,'mergedAll')
+                        mergedSpikes = mergeSpikes(spikeStruct, 'all');
+                        spikeStruct.merged = mergedSpikes;
+                        [~, mergedSpikeWaveforms, spikeFreeTrace] = alignPeaks(mergedSpikes, unit, fs, trace, params.spikeCutoutWin, 1,...
+                            minPeakThrMultiplier, maxPeakThrMultiplier,posPeakThrMultiplier);
+                        waveStruct.merged = mergedSpikeWaveforms;
+                    elseif strcmp(params.SpikesMethod,'mergedWavelet')
+                        mergedSpikes = mergeSpikes(sT, 'wavelets');
+                        spikeStruct.merged = mergedSpikes;
+                        [~, mergedSpikeWaveforms, spikeFreeTrace] = alignPeaks(mergedSpikes, unit, fs, trace, params.spikeCutoutWin, 1,...
+                            'minPeakThrMultiplier', minPeakThrMultiplier, 'maxPeakThrMultiplier', maxPeakThrMultiplier,...
+                            'posPeakThrMultiplier', posPeakThrMultiplier);
+                        waveStruct.merged = mergedSpikeWaveforms;
+                    end
+        
+                    if params.calculateSNR == 1 && isfield(waveStruct, 'merged')
+                        [~,sigAmp,~,~] = getSpikeAmp(waveStruct.merged);
+                        noiseAmp = mad(spikeFreeTrace, 1);
+                        SNR(channel) = sigAmp/noiseAmp;
+                    end
+                
                 
                 % 2021-06-08 I think this is not actually the mad...
-                % mad(channel) = median(trace) - median(abs(trace - mean(trace))) / 0.6745;
+                % medianAbsDev(channel) = median(trace) - median(abs(trace)) / 0.6745;
                 
                 % also taking the median of the mean is a  bit weird... 
                 % I think mean of mean or mean of median is more
                 % sensible...
-                s = median(abs(trace - mean(trace))) / 0.6745;
-                mad(channel) = s;
-                m = median(trace); % Note: filtered trace is already zero-mean
-                absThreshold = m - multiplier*s;
-                
-                variance(channel) = var(trace);
+                    s = median(abs(trace)) / 0.6745;
+                    medianAbsDev(channel) = s;
+                    m = median(trace); % Note: filtered trace is already zero-mean
+                    absThreshold = m - multiplier*s;
+                    variance(channel) = var(trace);
+
+                else
+                    medianAbsDev(channel) = NaN;
+                    absThreshold = NaN;
+                    variance(channel) = NaN;
+
+                end
+            
+                thresholds{channel} = thresholdStruct;
+                spikeTimes{channel} = spikeStruct;
+                spikeWaveforms{channel} = waveStruct;
                 
             end
             
@@ -348,8 +389,9 @@ for recording = 1:numel(files)
             params.save_suffix = save_suffix;
             params.fs = fs;
             params.variance = variance;
-            params.mad = mad;
+            params.mad = medianAbsDev;
             params.absThreshold = absThreshold;
+            params.groundElecs = grd;
             
             spikeDetectionResult = struct();
             % spikeDetectionResult.method = 'CWT';
@@ -359,7 +401,10 @@ for recording = 1:numel(files)
             disp(['Saving results to: ' saveName]);
             
             varsList = {'spikeTimes', 'channels', 'spikeDetectionResult', ...
-                'spikeWaveforms', 'thresholds', 'LFP'};
+                'spikeWaveforms', 'thresholds'}; % LFP
+            % if exist("spikeFreeTraces", "var")
+            %     varsList = [varsList, {'spikeFreeTraces'}];
+            end
             save(saveName, varsList{:}, '-v7.3');
         end
     end

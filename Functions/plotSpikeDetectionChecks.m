@@ -76,14 +76,18 @@ end
 
 
 methods = fieldnames(spikeTimes{1});
+if strcmp(Params.SpikesMethod,'merged') || strcmp(Params.SpikesMethod,'mergedAll') || strcmp(Params.SpikesMethod,'mergedWavelet')
+    methods = setdiff(methods, 'merged');
+end
 methods = sort(methods);
 
 bin_s = 10;
 Params.fs = spikeDetectionResult.params.fs;
 duration_s = spikeDetectionResult.params.duration;
-channel = 15;
-while channel == 15
-    channel = randi([1,num_chan],1);
+groundElecs = spikeDetectionResult.params.groundElecs;
+channel = randi(num_chan);
+while ~ismember(channel, groundElecs)
+    channel = randi(num_chan);
 end
 trace = filtered_data(:, channel);
 

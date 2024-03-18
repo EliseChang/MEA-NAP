@@ -96,14 +96,18 @@ end
 
 % Pre-allocation & logical indexing made it a lot faster
 % than using (end+1) indexing in the loop above
+
+% Remove zeros
+finalSFR = sFr(sFr~=0);
 % Convert back to original units
 if strcmp(unit, 'ms')
-    newSpikeTimes = sFr/(fs/1000);
+    newSpikeTimes = finalSFR/(fs/1000);
 elseif strcmp(unit, 's')
-    newSpikeTimes = sFr/fs;
+    newSpikeTimes = finalSFR/fs;
 elseif strcmp(unit, 'frames')
-    newSpikeTimes = sFr;
+    newSpikeTimes = finalSFR;
 end
+spikeWaveforms = spikeWaveforms(sFr~=0, :);
 spikeFreeTrace = rmmissing(spikeFreeTrace); % remove NaN values
 end
 

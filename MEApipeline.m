@@ -194,8 +194,9 @@ if ((Params.priorAnalysis == 0) || (Params.runSpikeCheckOnPrevSpikeData)) && (Pa
                         '1_SpikeDetection', '1A_SpikeDetectedData');
     
     % Run spike detection
+    subsetBatch = ExpName(3:end);
     if detectSpikes == 1
-        batchDetectSpikes(rawData, savePath, option, ExpName, Params);
+        batchDetectSpikes(rawData, savePath, option, subsetBatch, Params);
     end
 
     
@@ -204,7 +205,7 @@ if ((Params.priorAnalysis == 0) || (Params.runSpikeCheckOnPrevSpikeData)) && (Pa
            strcat('OutputData',Params.Date), 'ExperimentMatFiles');
 
     % Plot spike detection results 
-    for  ExN = 1:length(ExpName)
+    for  ExN = 2:length(ExpName)
         
         if Params.runSpikeCheckOnPrevSpikeData
             spikeDetectedDataOutputFolder = spikeDetectedData;
@@ -229,15 +230,15 @@ if ((Params.priorAnalysis == 0) || (Params.runSpikeCheckOnPrevSpikeData)) && (Pa
             mkdir(spikeDetectionCheckFNFolder)
         end 
         
-        % plotSpikeDetectionChecks(spikeTimes, spikeDetectionResult, ...
-        %     spikeWaveforms, Info, Params, spikeDetectionCheckFNFolder, oneFigureHandle)
+        plotSpikeDetectionChecks(spikeTimes, spikeDetectionResult, ...
+            spikeWaveforms, Info, Params, spikeDetectionCheckFNFolder, oneFigureHandle)
 
         %  % Optionally ignore spikes from noisy channels
         % if rmvNoisyChannels == 1
             
         
         % Check whether there are no spikes at all in the recording 
-        checkIfAnySpikes(spikeTimes, ExpName{ExN});
+        % checkIfAnySpikes(spikeTimes, ExpName{ExN});
 
     end
 

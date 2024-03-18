@@ -154,7 +154,7 @@ for i = 1:Ns
     Io = Index;
 end
 
-spikeFrames = parse(Index,SFr,Wid);
+spikeFrames = parse(Index,SFr,Wid, Refract);
 
 % PLOT RESULTS
 if PltFlg == 1
@@ -371,7 +371,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function fcn = parse(Index,SFr,Wid)
+function fcn = parse(Index,SFr,Wid, Refract)
 
 %This is a special function, it takes the vector Index which has
 %the structure [0 0 0 1 1 1 0 ... 0 1 0 ... 0]. This vector was obtained
@@ -383,7 +383,7 @@ function fcn = parse(Index,SFr,Wid)
 
 % Refract = 0.1;    %[ms] the refractory period -- can't resolve spikes
 %that are closer than Refract;
-Refract = round(Refract * SFr);
+RefractFrames = round(Refract * SFr);
 
 Merge = mean(Wid);      %[ms] merge spikes that are closer than Merge, since
 %it is likely they belong to the same spike
@@ -414,7 +414,7 @@ else
             break;
         else
             Diff = tE(i+1) - tE(i);
-            if Diff < Refract & Diff > Merge
+            if Diff < RefractFrames & Diff > Merge
                 tE(i+1) = [];      %discard spike too close to its predecessor
             elseif Diff <= Merge
                 tE(i) = ceil(mean([tE(i) tE(i+1)]));  %merge

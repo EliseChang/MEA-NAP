@@ -404,7 +404,7 @@ for recording = 1:numel(files)
                 'spikeWaveforms', 'thresholds'}; % LFP
             % if exist("spikeFreeTraces", "var")
             %     varsList = [varsList, {'spikeFreeTraces'}];
-            end
+            % end
             save(saveName, varsList{:}, '-v7.3');
         end
     end

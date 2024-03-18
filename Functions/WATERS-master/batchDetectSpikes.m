@@ -197,10 +197,11 @@ for recording = 1:numel(files)
     file = load(fileName);
     disp(['File loaded']);
     
-    data = file.dat;
+    % data = file.dat;
+    data = file.stimDat.postSALPA0_500ms;
     channels = file.channels;
     num_channels = length(channels);  
-    fs = file.fs;
+    fs = params.fs; % TEMP file.fs;
     ttx = contains(fileName, 'TTX');
     params.duration = length(data)/fs;
     clear file

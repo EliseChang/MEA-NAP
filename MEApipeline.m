@@ -19,8 +19,8 @@ spikeDetectedData = ''; % path to spike-detected data, leave as '' if no previou
 % Input and output filetype
 spreadsheet_file_type = 'excel'; % 'csv' or 'excel'
 spreadsheet_filename = fullfile(HomeDir, 'metadata','mecp2RecordingsListNew.xlsx'); 
-sheet = 'Baseline'; % specify excel sheet
-xlRange = 'A41:D118'; % specify range on the sheet (e.g., 'A2:C7' would analyse the first 6 files)
+sheet = 'Stim'; % specify excel sheet
+xlRange = 'A15:D51'; % specify range on the sheet (e.g., 'A2:C7' would analyse the first 6 files)
 csvRange = [2, Inf]; % read the data in the range [StartRow EndRow], e.g. [2 Inf] means start reading data from row 2
 Params.output_spreadsheet_file_type = 'csv';  % .xlsx or .csv
 
@@ -293,7 +293,7 @@ if Params.priorAnalysis==0 || Params.priorAnalysis==1 && Params.startAnalysisSte
 
         infoFnFilePath = fullfile(experimentMatFolderPath, ...
                           strcat(char(Info.FN),'_',Params.Date,'.mat'));
-        save(infoFnFilePath, 'Info', 'Params', 'spikeTimes', 'spikeMatrix', 'LFP')
+        save(infoFnFilePath, 'Info', 'Params', 'spikeTimes', 'spikeMatrix') % LFP
 
         clear spikeTimes
     end
@@ -306,7 +306,7 @@ if Params.priorAnalysis==0 || Params.priorAnalysis==1 && Params.startAnalysisSte
 
     disp('Electrophysiological properties')
 
-    % spikeFreqMax = max(spikeFreqMax);
+    spikeFreqMax = max(spikeFreqMax);
 
     for  ExN = 1:length(ExpName)
         
@@ -331,25 +331,25 @@ if Params.priorAnalysis==0 || Params.priorAnalysis==1 && Params.startAnalysisSte
         end 
 
         % generate and save raster plot
-        rasterPlot(char(Info.FN),spikeMatrix,LFP,Params,[], idvNeuronalAnalysisFNFolder, oneFigureHandle) %spikeFreqMax
+        rasterPlot(char(Info.FN),spikeMatrix,Params,spikeFreqMax, idvNeuronalAnalysisFNFolder, oneFigureHandle)
         % electrode heat maps
-        % coords = Params.coords{ExN};
-        % electrodeHeatMaps(char(Info.FN), spikeMatrix, Info.channels, ... 
-        %     spikeFreqMax,Params, coords, idvNeuronalAnalysisFNFolder, oneFigureHandle)
-        % % half violin plots
-        % firingRateElectrodeDistribution(char(Info.FN), Ephys, Params, ... 
-        %     Info, idvNeuronalAnalysisFNFolder, oneFigureHandle)
+        coords = Params.coords{ExN};
+        electrodeHeatMaps(char(Info.FN), spikeMatrix, Info.channels, ... 
+            spikeFreqMax,Params, coords, idvNeuronalAnalysisFNFolder, oneFigureHandle)
+        % half violin plots
+        firingRateElectrodeDistribution(char(Info.FN), Ephys, Params, ... 
+            Info, idvNeuronalAnalysisFNFolder, oneFigureHandle)
 
-        % infoFnFilePath = fullfile(experimentMatFolderPath, ...
-        %                   strcat(char(Info.FN),'_',Params.Date,'.mat'));
-        % save(infoFnFilePath,'Info','Params','spikeTimes','Ephys', '-v7.3')
+        infoFnFilePath = fullfile(experimentMatFolderPath, ...
+                          strcat(char(Info.FN),'_',Params.Date,'.mat'));
+        save(infoFnFilePath,'Info','Params','spikeTimes','Ephys', '-v7.3')
 
         clear spikeTimes spikeMatrix
 
     end
 
     % create combined plots across groups/ages
-    % PlotEphysStats(ExpName,Params,HomeDir, oneFigureHandle)
+    PlotEphysStats(ExpName,Params,HomeDir, oneFigureHandle)
     saveEphysStats(ExpName, Params)
     cd(HomeDir)
 

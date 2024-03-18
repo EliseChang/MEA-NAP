@@ -1,4 +1,4 @@
-function rasterPlot(File,spikeMatrix,LFP,Params,spikeFreqMax, figFolder, oneFigureHandle)
+function rasterPlot(File,spikeMatrix,Params,spikeFreqMax, figFolder, oneFigureHandle)
 % creata a raster plot of the recording
 % Parameters 
 % -----------
@@ -70,41 +70,38 @@ ax = gca;
 ax.TitleFontSizeMultiplier = 0.7;
 
 nexttile
-plot(LFP)
-% h = imagesc(downSpikeMatrix');
-xticks(60*1000:60*1000:duration_s*1000) % LFP sampling rate = 1kHz        
-% xticks((duration_s)/(duration_s/60):(duration_s)/(duration_s/60):duration_s)
+h = imagesc(downSpikeMatrix');
+        
+xticks((duration_s)/(duration_s/60):(duration_s)/(duration_s/60):duration_s)
 xticklabels({'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'})
 
-% if strcmp(Params.rasterColormap, 'parula')
-%     c = parula;c = c(1:round(length(c)*.85),:);
-%     colormap(c);
-% elseif strcmp(Params.rasterColormap, 'gray')
-%    colormap(flipud(gray))  
-% end
+if strcmp(Params.rasterColormap, 'parula')
+    c = parula;c = c(1:round(length(c)*.85),:);
+    colormap(c);
+elseif strcmp(Params.rasterColormap, 'gray')
+   colormap(flipud(gray))  
+end
 
 aesthetics
-% ylabel('Electrode')
-ylabel('Voltage (\muV)')
+ylabel('Electrode')
 xlabel('Time (min)')
-% cb = colorbar;
-% ylabel(cb, 'Firing Rate (Hz)')
-% cb.TickDirection = 'out';
-% set(gca,'TickDir','out');
-% cb.Location = 'Eastoutside';
-% cb.Box = 'off';
+cb = colorbar;
+ylabel(cb, 'Firing Rate (Hz)')
+cb.TickDirection = 'out';
+set(gca,'TickDir','out');
+cb.Location = 'Eastoutside';
+cb.Box = 'off';
 set(gca, 'FontSize', 14)
-% ylimit_cbar = spikeFreqMax;
-% ylimit_cbar = max([ylimit_cbar, 1]);  % ensures it is minimum of 1
-% caxis([0,ylimit_cbar])
-% yticks([1, 10:10:60])
-% title({strcat(regexprep(File,'_','','emptymatch'),' raster scaled to entire data batch'),' '});
-title({strcat(regexprep(File,'_','','emptymatch'),' LFP'),' '});
+ylimit_cbar = spikeFreqMax;
+ylimit_cbar = max([ylimit_cbar, 1]);  % ensures it is minimum of 1
+caxis([0,ylimit_cbar])
+yticks([1, 10:10:60])
+title({strcat(regexprep(File,'_','','emptymatch'),' raster scaled to entire data batch'),' '});
 ax = gca;
 ax.TitleFontSizeMultiplier = 0.7;
 
 %% save the figure
-figName = '3_Raster with LFP';
+figName = '3_Raster';
 figPath = fullfile(figFolder, figName);
 
 if Params.showOneFig

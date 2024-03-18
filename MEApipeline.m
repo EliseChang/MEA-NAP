@@ -194,9 +194,9 @@ if ((Params.priorAnalysis == 0) || (Params.runSpikeCheckOnPrevSpikeData)) && (Pa
                         '1_SpikeDetection', '1A_SpikeDetectedData');
     
     % Run spike detection
-    subsetBatch = ExpName(3:end);
+    % subsetBatch = ExpName(3:end);
     if detectSpikes == 1
-        batchDetectSpikes(rawData, savePath, option, subsetBatch, Params);
+        batchDetectSpikes(rawData, savePath, option, ExpName, Params);
     end
 
     
@@ -205,7 +205,7 @@ if ((Params.priorAnalysis == 0) || (Params.runSpikeCheckOnPrevSpikeData)) && (Pa
            strcat('OutputData',Params.Date), 'ExperimentMatFiles');
 
     % Plot spike detection results 
-    for  ExN = 2:length(ExpName)
+    for  ExN = 1:length(ExpName)
         
         if Params.runSpikeCheckOnPrevSpikeData
             spikeDetectedDataOutputFolder = spikeDetectedData;

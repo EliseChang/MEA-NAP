@@ -159,10 +159,12 @@ for recording = 1:numel(files)
     else
         fileName = files(recording).name;
     end
-
+    
+    % TODO: if using subset of recordings, will need to change this
+    % indexing
     % Set which electrodes to ground 
     if isfield(params, 'electrodesToGroundPerRecording')
-        if ~isempty(params.('electrodesToGroundPerRecording'))
+        if ~isempty(params.('electrodesToGroundPerRecording'){recording})
             groundElectrodeStr = params.('electrodesToGroundPerRecording'){recording}; 
             
             if isstr(groundElectrodeStr)
@@ -170,7 +172,7 @@ for recording = 1:numel(files)
                 groundElectrodeVec = str2double(groundElectrodeCell);
             else
                 groundElectrodeVec = groundElectrodeStr;
-            end 
+            end
             grd = groundElectrodeVec;
 
             if (params.electrodesToGroundPerRecordingUseName == 1)% && ~isnan(grd)
@@ -184,7 +186,10 @@ for recording = 1:numel(files)
                 grd = new_grd;
             end 
 
-        end 
+        
+        else
+            grd = 15;
+        end
     end 
     
     % Load data
@@ -378,6 +383,7 @@ for recording = 1:numel(files)
                 thresholds{channel} = thresholdStruct;
                 spikeTimes{channel} = spikeStruct;
                 spikeWaveforms{channel} = waveStruct;
+                clear thresholdStruct spikeStruct waveStruct
                 
             end
             
@@ -392,6 +398,7 @@ for recording = 1:numel(files)
             params.mad = medianAbsDev;
             params.absThreshold = absThreshold;
             params.groundElecs = grd;
+            params.SNR = SNR;
             
             spikeDetectionResult = struct();
             % spikeDetectionResult.method = 'CWT';
@@ -406,6 +413,7 @@ for recording = 1:numel(files)
             %     varsList = [varsList, {'spikeFreeTraces'}];
             % end
             save(saveName, varsList{:}, '-v7.3');
+            clear spikeTimes spikeDetectionResult spikeWaveforms thresholds variance mediansAbsDev absThreshold grd SNR
         end
     end
 end

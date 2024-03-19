@@ -335,15 +335,14 @@ if Params.priorAnalysis==0 || Params.priorAnalysis==1 && Params.startAnalysisSte
             mkdir(idvNeuronalAnalysisFNFolder)
         end 
 
-        % % generate and save raster plot
-        % rasterPlot(char(Info.FN),spikeMatrix,Params,spikeFreqMax, idvNeuronalAnalysisFNFolder, oneFigureHandle)
-        % % electrode heat maps
-        % coords = Params.coords; %{ExN}
-        % electrodeHeatMaps(char(Info.FN), spikeMatrix, Info.channels, ... 
-        %     spikeFreqMax,Params, coords, idvNeuronalAnalysisFNFolder, oneFigureHandle)
-        % % half violin plots
-        % firingRateElectrodeDistribution(char(Info.FN), Ephys, Params, ... 
-        %     Info, idvNeuronalAnalysisFNFolder, oneFigureHandle)
+        % generate and save raster plot
+        rasterPlot(char(Info.FN),spikeMatrix,Params,spikeFreqMax, idvNeuronalAnalysisFNFolder, oneFigureHandle)
+        % electrode heat maps
+        coords = Params.coords; %{ExN}
+        electrodeHeatMaps(Info, Ephys, spikeFreqMax, Params, coords, idvNeuronalAnalysisFNFolder, oneFigureHandle)
+        % half violin plots
+        firingRateElectrodeDistribution(char(Info.FN), Ephys, Params, ... 
+            Info, idvNeuronalAnalysisFNFolder, oneFigureHandle)
 
         infoFnFilePath = fullfile(experimentMatFolderPath, ...
                           strcat(char(Info.FN),'_',Params.Date,'.mat'));

@@ -17,11 +17,13 @@ Ephys.groundElecs = Info.groundElecs; % for plotting later
 
 % calculate firing rates  
 active_chanIndex = FiringRates      >= FR_threshold; % note that spike detection not performed on ground electrodes so will be considered inactive 
+inactiveElecIndex = find(FiringRates < FR_threshold);
 ActiveFiringRates = FiringRates(active_chanIndex);  %spikes of only active channels
 
 % Ephys.FR = ActiveFiringRates;
 Ephys.FR = FiringRates;
-Ephys.activeFR = ActiveFiringRates;
+Ephys.inactiveElecs = inactiveElecIndex;
+% Ephys.activeFR = ActiveFiringRates;
 % currently calculates only on active channels (>=FR_threshold)
 % stats
 % currently rounds to a specified number of decimal digits
@@ -40,15 +42,15 @@ if isnan(Ephys.FRmedian)
     Ephys.FRmedian=0;
 end
 
+% Single channel burst detection
+burstData = singleChannelBurstDetection(spikeMatrix, Params.singleChannelBurstMinSpike, Params.fs);
+
 % Network burst detection
-[burstMatrix, burstTimes, burstChannels ] = burstDetect(spikeMatrix, ...
+[burstMatrix, burstTimes, burstChannels, tonicChannels] = burstDetect(spikeMatrix, ...
     Params.networkBurstDetectionMethod, Params.fs, Params.minSpikeNetworkBurst, ...
     Params.minChannelNetworkBurst, Params.bakkumNetworkBurstISInThreshold);
 
-nBursts = size(burstTimes,1);
-
-% Single channel burst detection
-burstData = singleChannelBurstDetection(spikeMatrix, Params.singleChannelBurstMinSpike, Params.fs); 
+nBursts = size(burstTimes,1); 
 
 if ~isempty(burstMatrix)
     for Bst=1:length(burstMatrix)

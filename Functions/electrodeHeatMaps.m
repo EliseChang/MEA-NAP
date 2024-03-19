@@ -1,4 +1,4 @@
-function electrodeHeatMaps(FN, spikeMatrix, channels, spikeFreqMax, Params, coords, figFolder, oneFigureHandle)
+function electrodeHeatMaps(Info, Ephys, spikeFreqMax, Params, coords, figFolder, oneFigureHandle)
 % Plots the firing rate of each node / electrode with a circle representing 
 % the spatial location of the electrode / node, and the color representing 
 % the firing rate (spikes/s)
@@ -33,6 +33,17 @@ function electrodeHeatMaps(FN, spikeMatrix, channels, spikeFreqMax, Params, coor
 % -------
 % None 
 
+%% Get file and ephys variables
+
+FN = Info.FN;
+channels = Info.channels;
+allFR = Ephys.FR;
+groundElecs = Info.groundElecs;
+inactiveElecs = settdiff(Ephys.inactiveElecs, groundElecs);
+
+% Plot settings for inactive and ground electrodes
+groundElecColor = 'magenta';
+inactiveElecColor = 'red';
 %% plot
 p = [50 100 1150 570];
 

@@ -76,7 +76,11 @@ Params.spikeMethodColors = ...
     0.3010    0.7450    0.9330; ... 
     0.6350    0.0780    0.1840];
 
-%% Burst detection settings 
+%% Neuronal activity settings
+
+Params.activeElecFRTHr = 1/12; % Hz
+
+% Burst detection settings 
 Params.networkBurstDetectionMethod = 'Bakkum'; % supported methods: 'Bakkum', 'Manuel', 'LogISI', 'nno'
 Params.minSpikeNetworkBurst = 10;
 Params.minChannelNetworkBurst = 3;

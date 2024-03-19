@@ -8,18 +8,22 @@ verbose = 0;  % 1 : prints out status, 0 : keep quiet
 
 
 % set firing rate threshold in Hz
-FR_threshold = 0.01; % in Hz or spikes/s
+FR_threshold = Params.activeElecFRTHr; % in Hz or spikes/s
 % get spike counts
 FiringRates = full(sum(spikeMatrix))/Info.duration_s;
 
+% exclude ground electrodes
+Ephys.groundElecs = Info.groundElecs; % for plotting later
+
 % calculate firing rates  
-active_chanIndex = FiringRates      >= FR_threshold;
-ActiveFiringRates = FiringRates(active_chanIndex);  %spikes of only active channels ('active'= >7)
+active_chanIndex = FiringRates      >= FR_threshold; % note that spike detection not performed on ground electrodes so will be considered inactive 
+ActiveFiringRates = FiringRates(active_chanIndex);  %spikes of only active channels
 
 % Ephys.FR = ActiveFiringRates;
 Ephys.FR = FiringRates;
+Ephys.activeFR = ActiveFiringRates;
 % currently calculates only on active channels (>=FR_threshold)
-% stats  
+% stats
 % currently rounds to a specified number of decimal digits
 Ephys.FRmean = round(mean(ActiveFiringRates),3);
 Ephys.FRstd = round(std(ActiveFiringRates),3);
@@ -36,10 +40,8 @@ if isnan(Ephys.FRmedian)
     Ephys.FRmedian=0;
 end
 
-
-
 % Network burst detection
-[burstMatrix, burstTimes, burstChannels] = burstDetect(spikeMatrix, ...
+[burstMatrix, burstTimes, burstChannels ] = burstDetect(spikeMatrix, ...
     Params.networkBurstDetectionMethod, Params.fs, Params.minSpikeNetworkBurst, ...
     Params.minChannelNetworkBurst, Params.bakkumNetworkBurstISInThreshold);
 

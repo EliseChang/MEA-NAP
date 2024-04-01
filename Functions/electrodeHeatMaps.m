@@ -35,14 +35,14 @@ function electrodeHeatMaps(Info, Ephys, spikeFreqMax, Params, coords, figFolder,
 
 %% Get file and ephys variables
 
-FN = Info.FN;
+FN = char(Info.FN);
 channels = Info.channels;
 allFR = Ephys.FR;
 groundElecs = Info.groundElecs;
-inactiveElecs = settdiff(Ephys.inactiveElecs, groundElecs);
+inactiveElecs = setdiff(Ephys.inactiveElecs, groundElecs);
 
 % Plot settings for inactive and ground electrodes
-groundElecColor = 'magenta';
+groundElecColor = 'black';
 inactiveElecColor = 'red';
 %% plot
 p = [50 100 1150 570];
@@ -75,11 +75,6 @@ end
 xc = coords(:, 1);
 yc = coords(:, 2); 
 
-%% calculate spiking frequency
-
-spikeCount = sum(spikeMatrix); 
-spikeCount = full(spikeCount / (size(spikeMatrix, 1) / Params.fs));
-
 %% plot electrodes
 % TODO: I think a lot of rectangle coloring can be simplified
 mycolours = colormap;
@@ -91,28 +86,35 @@ nexttile
 uniqueXc = sort(unique(xc));
 nodeScaleF = 2/3; 
 
-makeMinSpikeCountZero = 1;
-
-if makeMinSpikeCountZero == 1
+% makeMinSpikeCountZero = 1;
+% 
+% if makeMinSpikeCountZero == 1
     minSpikeCountToPlot = 0;
-else 
-    minSpikeCountToPlot = min(spikeCount);
-end 
+% else 
+%     minSpikeCountToPlot = min(allFR);
+% end 
 
-for i = 1:length(spikeCount)
+for i = 1:length(allFR)
 
     pos = [xc(i)-(0.5*nodeScaleF) yc(i)-(0.5*nodeScaleF) nodeScaleF nodeScaleF];
-        try
-            colorToUse = mycolours(ceil(length(mycolours) * ((spikeCount(i) - minSpikeCountToPlot)/(prctile(spikeCount,99,'all')-minSpikeCountToPlot))),1:3);
-            rectangle('Position',pos,'Curvature',[1 1],'FaceColor',colorToUse,'EdgeColor','w','LineWidth',0.1) 
-        catch
-            if (spikeCount(i) - minSpikeCountToPlot) / (prctile(spikeCount,95,'all') - minSpikeCountToPlot) == 0
+            
+            if ismember(i, groundElecs) % (allFR(i) - minSpikeCountToPlot) / (prctile(allFR,95,'all') - minSpikeCountToPlot) <= 0
                 rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
-                    mycolours(ceil(length(mycolours)*((spikeCount(i)- minSpikeCountToPlot)/(prctile(spikeCount,99,'all')-minSpikeCountToPlot))+0.00001),1:3),'EdgeColor','w','LineWidth',0.1)
+                    'w','EdgeColor',groundElecColor)
+%                 rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
+%                     mycolours(ceil(length(mycolours)*((allFR(i)- minSpikeCountToPlot)/(prctile(allFR,99,'all')-minSpikeCountToPlot))+0.00001),1:3),'EdgeColor','w','LineWidth',0.1)
+            elseif ismember(i, inactiveElecs) % (allFR(i) - minSpikeCountToPlot) / (prctile(allFR,95,'all') - minSpikeCountToPlot) <= 0
+                rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
+                    'w','EdgeColor',inactiveElecColor)
             else
-                rectangle('Position',pos,'Curvature',[1 1],'FaceColor',mycolours(length(mycolours),1:3),'EdgeColor','w','LineWidth',0.1) 
+                try
+                    colorToUse = mycolours(ceil(length(mycolours) * ((allFR(i) - minSpikeCountToPlot)/(prctile(allFR,99,'all')-minSpikeCountToPlot))),1:3);
+                    rectangle('Position',pos,'Curvature',[1 1],'FaceColor',colorToUse,'EdgeColor','w','LineWidth',0.1)
+                catch
+                    rectangle('Position',pos,'Curvature',[1 1],'FaceColor',mycolours(length(mycolours),1:3),'EdgeColor','w','LineWidth',0.1)
+                end
             end
-        end
+        
     if Params.includeChannelNumberInPlots 
         text(pos(1) + 0.5 * nodeScaleF, pos(2) + 0.5 * nodeScaleF, ...
             sprintf('%.f', channels(i)), 'HorizontalAlignment','center')
@@ -131,7 +133,7 @@ for nTick = 1:numCbarTicks
     if nTick == 1
         tickLabels{nTick} = num2str(minSpikeCountToPlot);
     else 
-        tickLabels{nTick} = num2str(round((nTick-1) / numCbarTicks * prctile(spikeCount,99,'all'),2));
+        tickLabels{nTick} = num2str(round((nTick-1) / numCbarTicks * prctile(allFR,99,'all'),2));
     end 
 end 
 
@@ -145,19 +147,25 @@ title({strcat(regexprep(FN,'_','','emptymatch'),' Electrode heatmap scaled to re
 %% Right electrode plot (scaled to all recordings)
 
 nexttile
-for i = 1:length(spikeCount)
+for i = 1:length(allFR)
     pos = [xc(i)-(0.5*nodeScaleF) yc(i)-(0.5*nodeScaleF) nodeScaleF nodeScaleF];
+    if ismember(i, groundElecs) % (allFR(i) - minSpikeCountToPlot) / (prctile(allFR,95,'all') - minSpikeCountToPlot) <= 0
+        rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
+            'w','EdgeColor',groundElecColor);
+%                 rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
+%                     mycolours(ceil(length(mycolours)*((allFR(i)- minSpikeCountToPlot)/(prctile(allFR,99,'all')-minSpikeCountToPlot))+0.00001),1:3),'EdgeColor','w','LineWidth',0.1)
+    elseif ismember(i, inactiveElecs) % (allFR(i) - minSpikeCountToPlot) / (prctile(allFR,95,'all') - minSpikeCountToPlot) <= 0
+        rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
+            'w','EdgeColor',inactiveElecColor);
+    else
+        
         try
-            rectangle('Position', pos, 'Curvature', [1 1], 'FaceColor', ...
-                mycolours(ceil(length(mycolours)*((spikeCount(i) - minSpikeCountToPlot) / (spikeFreqMax-minSpikeCountToPlot))),1:3),'EdgeColor','w','LineWidth',0.1)
+            colorToUse = mycolours(ceil(length(mycolours) * ((allFR(i) - minSpikeCountToPlot)/(prctile(allFR,99,'all')-minSpikeCountToPlot))),1:3);
+            rectangle('Position',pos,'Curvature',[1 1],'FaceColor',colorToUse,'EdgeColor','w','LineWidth',0.1)
         catch
-            if (spikeCount(i)-minSpikeCountToPlot)/(spikeFreqMax - minSpikeCountToPlot) == 0
-                rectangle('Position',pos,'Curvature',[1 1],'FaceColor', ...
-                    mycolours(ceil(length(mycolours)*((spikeCount(i) - minSpikeCountToPlot) / (spikeFreqMax-minSpikeCountToPlot))+0.00001),1:3),'EdgeColor','w','LineWidth',0.1)
-            else
-                 rectangle('Position',pos,'Curvature',[1 1],'FaceColor',mycolours(length(mycolours),1:3),'EdgeColor','w','LineWidth',0.1) 
-            end
+            rectangle('Position',pos,'Curvature',[1 1],'FaceColor',mycolours(length(mycolours),1:3),'EdgeColor','w','LineWidth',0.1)
         end
+    end
 end
 ylim([min(yc)-1 max(yc)+1])
 xlim([min(xc)-1 max(xc)+1])
@@ -181,8 +189,21 @@ cb.TickDirection = 'out';
 cb.Label.String = 'mean firing rate (Hz)';
 title({strcat(regexprep(FN,'_','','emptymatch'),' Electrode heatmap scaled to entire data batch'),' '});
 
+% dummy plot for legend
+hold on
+plot(NaN, NaN, 'MarkerSize',10, 'MarkerFaceColor',groundElecColor)
+if ~isempty(inactiveElecs)
+    plot(NaN, NaN, 'MarkerSize',10, 'MarkerFaceColor',inactiveElecColor)
+    legend({'Ground', 'Inactive'})
+else
+    legend({'Ground'})
+end
+legend('Location','best', 'Orientation','horizontal')
+legend("boxoff")
+hold off
+
 % save figure
-figName = '2_Heatmap';
+figName = 'Heatmap';
 figPath = fullfile(figFolder, figName);
 
 if Params.showOneFig
@@ -196,6 +217,5 @@ if Params.showOneFig
 else 
     close(F1);
 end 
-
 
 end

@@ -197,8 +197,8 @@ for recording = 1:numel(files)
     file = load(fileName);
     disp(['File loaded']);
     
-    % data = file.dat;
-    data = file.stimDat.postSALPA0_500ms;
+    data = file.dat;
+    % data = file.stimDat.postSALPA0_500ms;
     channels = file.channels;
     num_channels = length(channels);  
     fs = params.fs; % TEMP file.fs;
@@ -224,11 +224,12 @@ for recording = 1:numel(files)
     wn = [params.filterLowPass params.filterHighPass] / (fs / 2);
     [b, a] = butter(3, wn); % 3rd-order Butterworth filter
     filtData = filtfilt(b, a, data);
+
+    % Get low-frequency component
+    [b_low, a_low] = butter(3, params.LFPCutoff/fs, "low");
+    lowFreq = filtfilt(b_low, a_low, data);
+    LFP = downsample(lowFreq, fs/1000); % downsample to 1kHz
     clear data
-    % % Get low-frequency component
-    % [b_low, a_low] = butter(3, params.LFPCutoff/fs, "low");
-    % lowFreq = filtfilt(b_low, a_low, data);
-    % LFP = downsample(lowFreq, fs/1000); % downsample to 1kHz
     
     for L = costList
         saveName = [savePath fileName(1:end-4) '_L_' num2str(L) '_spikes.mat'];
@@ -245,6 +246,7 @@ for recording = 1:numel(files)
             variance = zeros(1,num_channels);
             absThreshold = zeros(1, num_channels);
             SNR = zeros(1, num_channels);
+            maxSpikeAmp = zeros(1, num_channels);
 
             numChannelsInData = size(filtData, 2);
             if numChannelsInData ~= length(channels) 
@@ -343,8 +345,9 @@ for recording = 1:numel(files)
                     if strcmp(params.SpikesMethod,'merged') || strcmp(params.SpikesMethod,'mergedAll')
                         mergedSpikes = mergeSpikes(spikeStruct, 'all');
                         spikeStruct.merged = mergedSpikes;
-                        [~, mergedSpikeWaveforms, spikeFreeTrace] = alignPeaks(mergedSpikes, unit, fs, trace, params.spikeCutoutWin, 1,...
-                            minPeakThrMultiplier, maxPeakThrMultiplier,posPeakThrMultiplier);
+                        [~, mergedSpikeWaveforms, spikeFreeTrace] = alignPeaks(mergedSpikes, unit, fs, trace, params.spikeCutoutWin, 0);
+                        % 1,...
+                        %     minPeakThrMultiplier, maxPeakThrMultiplier,posPeakThrMultiplier);
                         waveStruct.merged = mergedSpikeWaveforms;
                     elseif strcmp(params.SpikesMethod,'mergedWavelet')
                         mergedSpikes = mergeSpikes(sT, 'wavelets');
@@ -356,10 +359,11 @@ for recording = 1:numel(files)
                     end
         
                     if params.calculateSNR == 1 && isfield(waveStruct, 'merged')
-                        [~,sigAmp,~,~] = getSpikeAmp(waveStruct.merged);
+                        [~,~,sigAmp,~,~] = getSpikeAmp(waveStruct.merged);
                         noiseAmp = mad(spikeFreeTrace, 1);
                         SNR(channel) = sigAmp/noiseAmp;
                     end
+                    % maxSpikeAmp(channel) = maxAmp;
                 
                 
                 % 2021-06-08 I think this is not actually the mad...
@@ -409,7 +413,7 @@ for recording = 1:numel(files)
             disp(['Saving results to: ' saveName]);
             
             varsList = {'spikeTimes', 'channels', 'spikeDetectionResult', ...
-                'spikeWaveforms', 'thresholds'}; % LFP
+                'spikeWaveforms', 'thresholds', 'LFP'}; % LFP
             % if exist("spikeFreeTraces", "var")
             %     varsList = [varsList, {'spikeFreeTraces'}];
             % end

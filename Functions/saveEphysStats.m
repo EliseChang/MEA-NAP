@@ -28,7 +28,7 @@ end
 % names of metrics
 ExpInfoE = {'Grp','DIV'}; % info for both age and genotype
 % list of metrics 
-NetMetricsE = {'numActiveElec','FRmean','FRmedian','NBurstRate','meanNumChansInvolvedInNbursts', ... 
+NetMetricsE = {'numActiveElec','percActiveElec','FRmean','FRmedian','NBurstRate','meanNumChansInvolvedInNbursts', ... 
                'meanNBstLengthS','meanISIWithinNbursts_ms','meanISIoutsideNbursts_ms','CVofINBI','fracInNburst'}; 
 
 % single cell/node metrics (1 value per cell/node)

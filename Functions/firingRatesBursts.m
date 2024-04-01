@@ -6,6 +6,7 @@ function [Ephys] = firingRatesBursts(spikeMatrix,Params,Info)
 
 verbose = 0;  % 1 : prints out status, 0 : keep quiet
 
+nChannels = numel(Params.channels);
 
 % set firing rate threshold in Hz
 FR_threshold = Params.activeElecFRTHr; % in Hz or spikes/s
@@ -33,6 +34,7 @@ Ephys.FRsem = round(std(ActiveFiringRates)/(sqrt(length(ActiveFiringRates))),3);
 Ephys.FRmedian = round(median(ActiveFiringRates),3);
 Ephys.FRiqr = round(iqr(ActiveFiringRates),3);
 Ephys.numActiveElec = length(ActiveFiringRates);
+Ephys.percActiveElec =  Ephys.numActiveElec / (nChannels - numel(Ephys.groundElecs)) * 100;
 
 %get rid of NaNs where there are no spikes; change to 0
 if isnan(Ephys.FRmean)
@@ -46,7 +48,7 @@ end
 burstData = singleChannelBurstDetection(spikeMatrix, Params.singleChannelBurstMinSpike, Params.fs);
 
 % Network burst detection
-[burstMatrix, burstTimes, burstChannels, tonicChannels] = burstDetect(spikeMatrix, ...
+[burstMatrix, burstTimes, burstChannels] = burstDetect(spikeMatrix, ...
     Params.networkBurstDetectionMethod, Params.fs, Params.minSpikeNetworkBurst, ...
     Params.minChannelNetworkBurst, Params.bakkumNetworkBurstISInThreshold);
 

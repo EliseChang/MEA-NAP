@@ -1,4 +1,4 @@
-function rasterPlotLFP(File,spikeMatrix,LFP,Params,spikeFreqMax, figFolder, oneFigureHandle)
+function rasterPlotLFP(File,spikeMatrix,LFP,Params, figFolder, oneFigureHandle)
 % creata a raster plot of the recording
 % Parameters 
 % -----------
@@ -21,6 +21,12 @@ spikeMatrix = full(spikeMatrix);
 
 % downsample matrix to 1 frame per second
 downSpikeMatrix = downSampleSum(spikeMatrix, duration_s);
+
+if duration_s > 300
+    downSpikeMatrix = downSpikeMatrix(end-300:end,:);
+    LFP = LFP(end-300e3:end,:);
+    duration_s = 300;
+end
 
 %% plot the raster
 
@@ -70,6 +76,9 @@ ax = gca;
 ax.TitleFontSizeMultiplier = 0.7;
 
 nexttile
+% TEMP
+LFP = medianCentre(LFP);
+
 plot(LFP)
 % h = imagesc(downSpikeMatrix');
 xticks(60*1000:60*1000:duration_s*1000) % LFP sampling rate = 1kHz        
@@ -99,12 +108,12 @@ set(gca, 'FontSize', 14)
 % caxis([0,ylimit_cbar])
 % yticks([1, 10:10:60])
 % title({strcat(regexprep(File,'_','','emptymatch'),' raster scaled to entire data batch'),' '});
-title({strcat(regexprep(File,'_','','emptymatch'),' LFP'),' '});
+title({strcat(regexprep(File,'_','','emptymatch'),' voltage traces (low-pass filtered at 300 Hz)'),' '});
 ax = gca;
 ax.TitleFontSizeMultiplier = 0.7;
 
 %% save the figure
-figName = '3_Raster with LFP';
+figName = File;
 figPath = fullfile(figFolder, figName);
 
 if Params.showOneFig

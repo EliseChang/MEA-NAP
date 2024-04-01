@@ -1,4 +1,4 @@
-function [minAmp, meanAmp, minSlope, maxSlope] = getSpikeAmp(spikeWaveforms)
+function [minAmp, maxAmp, meanAmp, minSlope, maxSlope] = getSpikeAmp(spikeWaveforms)
 
 % TODO: add documentation
 % function originally created to estimate spike waveform properties for
@@ -20,6 +20,7 @@ if ~isempty(inclSpikes)
     amps = spikeMaxAmp - spikeMinAmp;
     meanAmp = mean(amps);
     minAmp = min(amps(amps~=0));
+    maxAmp = max(amps);
     % chMinAmp(1, ch) = prctile(amps, 10); % set the minimum amplitude as the 10th percentile
     
     preSpikes = inclSpikes(:,1:25); % find the max. value and index before the spike minimum

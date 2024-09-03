@@ -79,6 +79,7 @@ Params.spikeMethodColors = ...
 %% Neuronal activity settings
 
 Params.activeElecFRTHr = 1/12; % Hz
+Params.FRBounds = [0, 1; 1, 4]; % define three regimes across electrodes: low, medium and high
 
 % Burst detection settings 
 Params.networkBurstDetectionMethod = 'Bakkum'; % supported methods: 'Bakkum', 'Manuel', 'LogISI', 'nno'
@@ -117,7 +118,7 @@ Params.groupColors = [ ...
 Params.minNodeSize = 0.1;  % minimum node size in network plots
 Params.networkPlotEdgeThreshold = 0.0001; % minimum edge weight in network plots
 Params.kdeHeight = 0.3;  % height of the KDE curve, only affects plotting and not the kernel density estimate itself
-Params.kdeWidthForOnePoint = 0;  % bandwidth for KDE (in half violin plots) if there is only a single data point 
+Params.kdeWidthForOnePoint = 1e-4;  % bandwidth for KDE (in half violin plots) if there is only a single data point 
 % set to 0 to disable plotting of KDE if there is only a single data point,
 % and set to a positive number for a custom bandwidth, or set to 'auto', in
 % which case the bandwidth will be determined automatically by ksdensity(),
@@ -179,7 +180,7 @@ Params.netMetToCal = {'ND', 'EW', 'NS', 'aN', 'Dens', 'Ci', 'Q', 'nMod', 'Eglob'
         'aveControl', 'modalControl'};
 % Other optional ones: SA_lambda, SA_inf, TA_regional, TA_global
  
-Params.excludeEdgesBelowThreshold = 1;
+Params.excludeEdgesBelowThreshold = 0;
 Params.minNumberOfNodesToCalNetMet = 25;  % minimum number of nodes to calculate BC and other metrics
 Params.networkLevelNetMetToPlot = ...
     {'aN','Dens','CC','nMod','Q','PL','Eglob', ...

@@ -30,6 +30,7 @@ data(isinf(data)) = [];
 % See: https://aakinshin.net/posts/kde-bw/  
 % This seem to take forever... 
 % bandwidth = bandwidth_SJ(data, 'norm');
+hold on
 
 % Improved Sheather and Jones rule 
 if (length(data) > 1) && (std(data) > 10^-8)  % using value slightly above zero to prevent numerical precision issues
@@ -46,28 +47,21 @@ if (length(data) > 1) && (std(data) > 10^-8)  % using value slightly above zero 
     % min_bandwidth = 0.03;
     min_bandwidth = (max(data) - min(data)) * 0.1;
     bandwidth = max([min_bandwidth, bandwidth]); 
+
+    % plot the violin
+    [f,xi] = ksdensity(data, 'Bandwidth',bandwidth);
+    % [f,xi] = ksdensity(data);
     
-else
-    if strcmp(kdeWidthForOnePoint, 'auto')
-        [~, ~, bandwidth] = ksdensity(data);
-    else 
-        bandwidth = kdeWidthForOnePoint;  % small value, or zero is recommended
-    end 
-end 
-
-% plot the violin
-[f,xi] = ksdensity(data, 'Bandwidth',bandwidth);
-% [f,xi] = ksdensity(data);
-
-% f = density;
-% xi = xmesh;
-
-widthFactor = width/max(f);
-obj.ViolinPlot = fill(f*widthFactor+pos+0.1,xi,colour);
-hold on
-obj.ViolinPlot.EdgeColor = colour;
-obj.ViolinPlot.LineWidth = 1;
+    % f = density;
+    % xi = xmesh;
+    
+    widthFactor = width/max(f);
+    obj.ViolinPlot = fill(f*widthFactor+pos+0.1,xi,colour);
+    obj.ViolinPlot.EdgeColor = colour;
+    obj.ViolinPlot.LineWidth = 1;
             
+end
+
 % plot the data points next to the violin
 jitter = (rand(size(data))) * width;
 drops_pos = jitter +pos - (width+0.1);
@@ -86,5 +80,7 @@ obj.MeanPlot = scatter(pos, meanValue, 100, [0 0 0], 'filled');
 semValue = std(data)/sqrt(length(data));
 obj.StdPlot = plot([pos pos],[meanValue-semValue meanValue+semValue],'Color',[0 0 0]);
 obj.StdPlot.LineWidth = 3;
+
+hold off
 
 end

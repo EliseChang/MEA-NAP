@@ -61,6 +61,7 @@ for i = 1:length(ExpName)
          allElectrodeLevelData.FileName = {};
          allElectrodeLevelData.Grp = {};
          allElectrodeLevelData.DIV = [];
+         allElectrodeLevelData.Subject = [];
          allElectrodeLevelData.Channel = [];
      end 
      
@@ -70,11 +71,12 @@ for i = 1:length(ExpName)
      allRecordingLevelData.DIV = [allRecordingLevelData.DIV; expData.Info.DIV{1}];
      
      % add to electrode level data 
-     numElectrodes = length(expData.spikeTimes); 
+     numElectrodes = 60; %length(expData.spikeTimes); 
      allElectrodeLevelData.FileName = [allElectrodeLevelData.FileName; repmat({expData.Info.FN{1}}, numElectrodes, 1)];
      allElectrodeLevelData.Grp = [allElectrodeLevelData.Grp; repmat({expData.Info.Grp{1}}, numElectrodes, 1)];
      allElectrodeLevelData.DIV = [allElectrodeLevelData.DIV; repmat(expData.Info.DIV{1}, numElectrodes, 1)];
-     
+     allElectrodeLevelData.Subject = [allElectrodeLevelData.Subject; repmat(Params.subject(i), numElectrodes, 1)];
+     % allElectrodeLevelData.Channel = [allElectrodeLevelData.Channel; Params.channels];
      if size(expData.Info.channels, 1) == 1
         allElectrodeLevelData.Channel = [allElectrodeLevelData.Channel; expData.Info.channels'];
      else

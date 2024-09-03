@@ -13,8 +13,8 @@ FR_threshold = Params.activeElecFRTHr; % in Hz or spikes/s
 % get spike counts
 FiringRates = full(sum(spikeMatrix))/Info.duration_s;
 
-% exclude ground electrodes
-Ephys.groundElecs = Info.groundElecs; % for plotting later
+% % exclude ground electrodes
+% Ephys.groundElecs = Info.groundElecs; % for plotting later
 
 % calculate firing rates  
 active_chanIndex = FiringRates      >= FR_threshold; % note that spike detection not performed on ground electrodes so will be considered inactive 
@@ -34,7 +34,7 @@ Ephys.FRsem = round(std(ActiveFiringRates)/(sqrt(length(ActiveFiringRates))),3);
 Ephys.FRmedian = round(median(ActiveFiringRates),3);
 Ephys.FRiqr = round(iqr(ActiveFiringRates),3);
 Ephys.numActiveElec = length(ActiveFiringRates);
-Ephys.percActiveElec =  Ephys.numActiveElec / (nChannels - numel(Ephys.groundElecs)) * 100;
+% Ephys.percActiveElec =  Ephys.numActiveElec / (nChannels - numel(Ephys.groundElecs)) * 100;
 
 %get rid of NaNs where there are no spikes; change to 0
 if isnan(Ephys.FRmean)
@@ -87,10 +87,12 @@ if ~isempty(burstMatrix)
     
     % NOTE: these are based on the ISI across all channels!!!
     Ephys.meanNBstLengthS = mean(NBLength); % mean length burst in s
+    Ephys.meanNBstLength_ms = mean(NBLength)*1000;
     Ephys.numNbursts = size(burstTimes,1);
     Ephys.meanNumChansInvolvedInNbursts = mean(chans_involved);
     Ephys.meanISIWithinNbursts_ms = mean(mean_ISI_w);
     Ephys.meanISIoutsideNbursts_ms = round(mean(ISI_outside)/Params.fs*1000,3);
+    Ephys.meanIBI_ms = mean(IBIs)/Params.fs*1000;
     Ephys.CVofINBI = round((std(IBIs)/mean(IBIs)),3); %3 decimal places
     Ephys.NBurstRate = round(60*(nBursts/(length(spikeMatrix(:,1))/Params.fs)),3);
     Ephys.fracInNburst = round(sp_in_bst/sum(sum(spikeMatrix)),3);
@@ -117,10 +119,12 @@ else
     end 
     sp_in_bst=0;
     Ephys.meanNBstLengthS = nan; % mean length burst in s
+    Ephys.meanNBstLength_ms = nan;
     Ephys.numNbursts = 0;
     Ephys.meanNumChansInvolvedInNbursts = nan;
     Ephys.meanISIWithinNbursts_ms = nan;
     Ephys.meanISIoutsideNbursts_ms = nan;
+    Ephys.meanIBI_ms = nan;
     Ephys.CVofINBI = nan; %3 decimal places
     Ephys.NBurstRate = 0;
     Ephys.fracInNburst = nan;

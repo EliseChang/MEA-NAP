@@ -1,7 +1,7 @@
 function batchDetectSpikes(dataPath, savePath, option, files, params)
 % Performs spike detection 
 % Runs spike detection through recordings, cost parameters, electrodes, and wavelets.
-% 
+
 % Parameters:
 % -----------
 % dataPath : str or character
@@ -11,13 +11,15 @@ function batchDetectSpikes(dataPath, savePath, option, files, params)
 %             output will be saved
 % option : 
 %     pass either path to files ('path') or list of files ('list');
-% files : cell array 
-% 
+% files : cell array
 % params: structure
 %     [optional] argument to pass structure containing parameters;
 %       otherwise, run setParams() first to set parameters
 %       nSpikes : number of spikes use to make the custom threshold
 %       template
+%       stim: true for loading 'stimDat' struct, false for reading 'dat'
+%       rawDataFieldName: name of field containing data matrix in 'stimDat'
+%       struct, only used if stim = true (if false, will be set to empty string)
 % 
 % Returns
 % -------
@@ -29,6 +31,10 @@ function batchDetectSpikes(dataPath, savePath, option, files, params)
 % Improvements to make 
 % set params to Params to be consistent with the rest of the pipeline 
 % TODO: Please address the median definition
+
+% Edited by Elise Chang: sorted grounding, added option for reading of stimulation data
+% compatible with stimPrePipelineProcessing and saved merged spikeTimes
+% across methods
 
 
 arguments
@@ -160,51 +166,50 @@ for recording = 1:numel(files)
         fileName = files(recording).name;
     end
     
-    % TODO: if using subset of recordings, will need to change this
-    % indexing
     % Set which electrodes to ground 
-    if isfield(params, 'electrodesToGroundPerRecording')
-        if ~isempty(params.('electrodesToGroundPerRecording'){recording})
-            groundElectrodeStr = params.('electrodesToGroundPerRecording'){recording}; 
-            
-            if isstr(groundElectrodeStr)
-                groundElectrodeCell = strsplit(groundElectrodeStr,', ');
-                groundElectrodeVec = str2double(groundElectrodeCell);
-            else
-                groundElectrodeVec = groundElectrodeStr;
-            end
-            grd = groundElectrodeVec;
-
-            if (params.electrodesToGroundPerRecordingUseName == 1)% && ~isnan(grd)
-                % Convert from the channel name we want to ground, to the
-                % index within Params.channels
-                new_grd = zeros(1, length(grd));
-                for grd_idx = 1:length(grd)
-                    new_grd(grd_idx) = find(params.channels == grd(grd_idx)); % params.channels(recording)
-
-                end 
-                grd = new_grd;
-            end 
-
-        
+    if isfield(params,'electrodesToGroundPerRecording') && ~isempty(params.('electrodesToGroundPerRecording'){recording})
+        if isstr(params.electrodesToGroundPerRecording{recording})
+            groundElectrodeVec = str2num(params.electrodesToGroundPerRecording{recording});
         else
-            grd = 15;
+            groundElectrodeVec = params.electrodesToGroundPerRecording{recording};
+        end            
+
+        grd = groundElectrodeVec;
+
+        if (params.electrodesToGroundPerRecordingUseName == 1)% && ~isnan(grd)
+            % Convert from the channel name we want to ground, to the
+            % index within Params.channels
+            new_grd = zeros(1, length(grd));
+            for grd_idx = 1:length(grd)
+                new_grd(grd_idx) = find(params.channels == grd(grd_idx)); % params.channels(recording)
+
+            end 
+            grd = new_grd;
         end
-    end 
+    else
+        grd = 15;
+    end
     
     % Load data
     disp(['Loading ' fileName ' ...']);
-    file = load(fileName);
+    if params.stim
+        load(fileName, 'stimDat', 'channels');
+        data = stimDat.(params.rawDataFieldName);
+        clear stimDat
+    else
+        data = load(fileName, 'dat').dat;
+        load(fileName, 'channels');
+    end
+    
+    if issparse(data)
+        data = full(data);
+    end
     disp(['File loaded']);
     
-    data = file.dat;
-    % data = file.stimDat.postSALPA0_500ms;
-    channels = file.channels;
     num_channels = length(channels);  
     fs = params.fs; % TEMP file.fs;
     ttx = contains(fileName, 'TTX');
     params.duration = length(data)/fs;
-    clear file
     
     % Truncate the data if specified
     if isfield(params, 'subsample_time')
@@ -413,7 +418,7 @@ for recording = 1:numel(files)
             disp(['Saving results to: ' saveName]);
             
             varsList = {'spikeTimes', 'channels', 'spikeDetectionResult', ...
-                'spikeWaveforms', 'thresholds', 'LFP'}; % LFP
+                'spikeWaveforms', 'thresholds', 'LFP'};
             % if exist("spikeFreeTraces", "var")
             %     varsList = [varsList, {'spikeFreeTraces'}];
             % end

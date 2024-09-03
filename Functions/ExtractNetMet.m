@@ -125,12 +125,12 @@ for e = 1:length(lagval)
     %adjM(iN,:) = [];
     % adjM(:,iN) = [];
 
-    % Tim 2022-10-14 fix
-    nodeStrength = sum(adjM, 1);
-    inclusionIndex = find(nodeStrength ~= 0);
-    adjM = adjM(inclusionIndex, inclusionIndex);
-    coords = originalCoords(inclusionIndex, :);
-    Params.netSubsetChannels = channels(inclusionIndex);
+    % % Tim 2022-10-14 fix
+    % nodeStrength = sum(adjM, 1);
+    % inclusionIndex = find(nodeStrength ~= 0);
+    % adjM = adjM(inclusionIndex, inclusionIndex);
+    % coords = originalCoords(inclusionIndex, :);
+    % Params.netSubsetChannels = channels(inclusionIndex);
     
     %% node degree, edge weight, node strength
     if Params.excludeEdgesBelowThreshold 

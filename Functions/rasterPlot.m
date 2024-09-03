@@ -24,7 +24,7 @@ downSpikeMatrix = downSampleSum(spikeMatrix, duration_s);
 
 %% plot the raster
 
-p = [100 100 1500 800];
+p = [311         901        1920         976]; %[100 100 1500 800];
 set(0, 'DefaultFigurePosition', p)
 
 if Params.showOneFig
@@ -62,7 +62,6 @@ cb.Box = 'off';
 set(gca, 'FontSize', 14)
 ylimit_cbar = prctile(downSpikeMatrix(:),Params.rasterPlotUpperPercentile,'all');
 ylimit_cbar = max([ylimit_cbar, 1]);  % ensures it is minimum of 1
-
 caxis([0,ylimit_cbar])
 yticks([1, 10:10:60])
 title({strcat(regexprep(File,'_','','emptymatch'),' raster scaled to recording'),' '});
@@ -71,7 +70,7 @@ ax.TitleFontSizeMultiplier = 0.7;
 
 nexttile
 h = imagesc(downSpikeMatrix');
-        
+
 xticks((duration_s)/(duration_s/60):(duration_s)/(duration_s/60):duration_s)
 xticklabels({'1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'})
 
@@ -86,7 +85,7 @@ aesthetics
 ylabel('Electrode')
 xlabel('Time (min)')
 cb = colorbar;
-ylabel(cb, 'Firing Rate (Hz)')
+ylabel(cb, 'Firing rate (Hz)')
 cb.TickDirection = 'out';
 set(gca,'TickDir','out');
 cb.Location = 'Eastoutside';

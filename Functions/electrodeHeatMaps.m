@@ -38,7 +38,7 @@ function electrodeHeatMaps(Info, Ephys, spikeFreqMax, Params, coords, figFolder,
 FN = char(Info.FN);
 channels = Info.channels;
 allFR = Ephys.FR;
-groundElecs = Info.groundElecs;
+groundElecs = Info.grdElecs;
 inactiveElecs = setdiff(Ephys.inactiveElecs, groundElecs);
 
 % Plot settings for inactive and ground electrodes
@@ -191,9 +191,9 @@ title({strcat(regexprep(FN,'_','','emptymatch'),' Electrode heatmap scaled to en
 
 % dummy plot for legend
 hold on
-plot(NaN, NaN, 'MarkerSize',10, 'MarkerFaceColor',groundElecColor)
+plot(NaN, NaN, 'Color',groundElecColor)
 if ~isempty(inactiveElecs)
-    plot(NaN, NaN, 'MarkerSize',10, 'MarkerFaceColor',inactiveElecColor)
+    plot(NaN, NaN, 'Color',inactiveElecColor)
     legend({'Ground', 'Inactive'})
 else
     legend({'Ground'})

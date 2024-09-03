@@ -1,6 +1,7 @@
 function checkIfAnySpikes(spikeTimes, ExpName)
 
-    spikeDetectionMethodUsed = fieldnames(spikeTimes{1}); 
+    spikeDetectionMethodUsed = fieldnames(spikeTimes{1});
+    spikeDetectionMethodUsed = setdiff(spikeDetectionMethodUsed, 'merged');
     all_method_spikes_detected = 0;
     for nmethod = 1:length(spikeDetectionMethodUsed)
         methodName = spikeDetectionMethodUsed{nmethod}; 

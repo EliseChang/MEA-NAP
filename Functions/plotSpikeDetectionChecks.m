@@ -5,6 +5,7 @@ function plotSpikeDetectionChecks(spikeTimes,spikeDetectionResult,spikeWaveforms
 % spike-related statistics such as the firing rate of each unit / recorded
 % from each electrode.
 % 
+% Note: 
 % Parameters 
 % ----------
 % spikeTimes : cell array of structures
@@ -16,10 +17,16 @@ function plotSpikeDetectionChecks(spikeTimes,spikeDetectionResult,spikeWaveforms
 %     Info.FN : 
 %     Info.raw_file_path : (str)
 %         path to the folder including the raw matlab files
+% Params.fs : int
+%     original sampling frequency before down-sampling (Hz)
 % Params.dSampF : int
 %     down-sampling factor for plotting spike detection check 
 %     normally no down sampling is necessary, so set this to be equal 
 %     to the sampling rate of your acquisition system
+% Params.stim : logical
+%     true for loading 'stimDat' struct, otherwise 'dat'
+% Params.rawDataFieldName: name of field containing data matrix in 'stimDat'
+%       struct, used if stim = true
 % figFolder : str
 %     specify where the full path to the folder to save the spike detection
 %     check plots
@@ -38,8 +45,18 @@ if isfield(Info, 'rawData')
 end 
 
 % TODO: load to variable
-load(raw_file_name);
-dat = double(dat);
+
+if Params.stim
+    load(raw_file_name, 'stimDat');
+    dat = stimDat.(Params.rawDataFieldName);
+    clear stimDat
+else
+    load(raw_file_name, 'dat');
+end
+
+if issparse(dat)
+    dat = full(dat);
+end
 
 % convert everything to be in uV for plotting
 if isa(Params.potentialDifferenceUnit, 'char')
@@ -68,7 +85,7 @@ num_chan = size(dat,2);
 for ch = 1:num_chan
     lowpass = Params.filterLowPass;
     highpass = Params.filterHighPass;
-    wn = [lowpass highpass] / (fs / 2); % seems like the fs here comes from workspace???
+    wn = [lowpass highpass] / (Params.fs / 2); % seems like the fs here comes from workspace???
     filterOrder = 3;
     [b, a] = butter(filterOrder, wn);
     filtered_data(:,ch) = filtfilt(b, a, dat(:,ch));
@@ -109,12 +126,15 @@ end
 
 dSampF = Params.dSampF;
 for i = 1:length(methods)
-    num_samples = ceil(duration_s*fs);
+    num_samples = ceil(duration_s*Params.fs);
     spk_vec_all = zeros(1, num_samples);
     spk_matrix = zeros(num_chan, ceil(num_samples/dSampF));
     method = methods{i};
     for j = 1:num_chan
-        spk_times = round(spikeTimes{j}.(method)*fs);
+        if ~isfield(spikeTimes{j}, 'merged')
+            spikeTimes{j}.merged = [];
+        end
+        spk_times = round(spikeTimes{j}.(method)*Params.fs);
         spike_times{j}.(method) = spk_times;
         spike_count(j) = length(spk_times);
         spk_vec = zeros(1, num_samples);
@@ -162,35 +182,43 @@ else
 end 
 
 %% examples traces
+
+numExampleTraces = 9;
+
+ground = true;
+while ground
+    channel = randi([1,num_chan],1);
+    ground = ismember(channel, spikeDetectionResult.params.groundElecs);
+end
+
+trace = filtered_data(:, channel);
+
 p = [100 100 1400 800];
 set(0, 'DefaultFigurePosition', p)
 
 if ~Params.showOneFig
-    F1 = figure;
+    F1 = figure('Position',p);
 else
     set(oneFigureHandle, 'Position', p);
-end 
+end
 
 t = tiledlayout(5,2,'TileSpacing','Compact');
 
-% l iterates through the example traces
-numExampleTraces = 9;
 for l = 1:numExampleTraces
-    
-    bin_ms = 30;  % What is this???
-    channel = randi([1,num_chan],1);
-    trace = filtered_data(:, channel);
-    
+
+
+    bin_ms = 30;
+
     nexttile
     plot(trace, 'k-')
     hold on
-    
+
     for m = 1:length(methods)
         method = methods{m};
         spike_train = spikeTimes{channel}.(method);
         switch spikeDetectionResult.params.unit
             case 's'
-                spike_train = spike_train * fs;
+                spike_train = spike_train * Params.fs;
             case 'ms'
                 spike_train = spike_train * fs/1000;
             case 'frames'
@@ -201,7 +229,7 @@ for l = 1:numExampleTraces
             'markeredgecolor', Params.spikeMethodColors(m, :), 'linewidth',0.1);
     end
     methodsl = strrep(methods, 'p','.');
-    
+
     % Why is the try catch required here???
     % st is a random spike train???
 
@@ -226,7 +254,9 @@ for l = 1:numExampleTraces
     title({["Electrode "+channel], [(st-bin_ms*25)/Params.dSampF + " - " + (st+bin_ms*25)/Params.dSampF + " s"]})
     aesthetics
     set(gca,'TickDir','out');
+
 end
+
 hL = legend('Filtered voltage trace', methodsl{:});
 newPosition = [0.6 0.12 0.1 0.1];
 newUnits = 'normalized';
@@ -250,8 +280,13 @@ else
     clf reset
 end 
 
-
 %% waveforms
+
+ground = true;
+while ground
+    channel = randi([1,num_chan],1);
+    ground = ismember(channel, spikeDetectionResult.params.groundElecs);
+end
 [~, unique_idx, ~] = mergeSpikes(spike_times{channel},'all');
 
 p = [100 100 600 700];
